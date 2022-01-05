@@ -1,0 +1,34 @@
+# project files
+config.json
+tokens.json
+.version
+publishing-keyring.gpg
+
+# RegisterEnvironment config
+/src/main/resources/RegisterEnvironment.json
+
+# music files
+*.mp3
+*.aac
+*.m4a
+*.wav
+*.flac
+*.ogg
+
+# gradle
+/build/
+/.gradle/
+/gradle/
+/out/
+gradle.properties
+
+/bin/
+
+# intellij files
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# vscode
+/.vscode/
