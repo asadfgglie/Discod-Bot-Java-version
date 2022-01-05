@@ -5,7 +5,7 @@ tokens.json
 publishing-keyring.gpg
 
 # RegisterEnvironment config
-/src/main/resources/RegisterEnvironment.json
+RegisterEnvironment.json
 
 # music files
 *.mp3
