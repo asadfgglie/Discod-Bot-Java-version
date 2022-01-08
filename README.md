@@ -2,16 +2,64 @@
 
 ---
 
-主要分三個區塊:
+主要分四個區塊:
 
-* Main
+* SetUp
+* Basic
 * Service
 * Service register system
 
+目前已有服務:
+
+* GFloor
+
+   此服務為檢查頻道是否有按照G樓規則發言
+
+   G樓規則:
+
+   * 在所有文字訊息前都必須以 `g數字` 開頭
+   * `g數字` 中，`數字` 表示樓層
+   * 樓層必須從 `1` 樓開始建造，下一個發言人必須要接著蓋一層樓
+   * 同一則訊息不可以換行來連續建樓，同一人也不可以連續建樓
+     ```
+     User1:
+     g1 haha
+     g2 666
+     g3 777
+     (僅視為 g1 樓)
+     
+     User2:
+     g1 haha
+     
+     User2:
+     g2 666
+     X
+     ```
+
 ---
 
-## Main
-位於 `src/main/java/ckcsc/asadfgglie/main/Main.java`
+## SetUp
+位於 `src/main/java/ckcsc/asadfgglie/setup/SetUp.java`
+
+為程式進入點
+
+請在命令列中傳入 `--configpath <path>` 來指定 `config-folder` 的儲存路徑
+
+若沒有進行指定，預設將以本檔案所在目錄為 `config-folder`(若已經打包成Jar檔，將設為Jar所在目錄)
+
+`config-folder` 中，必須存在 `BotConfig.json`
+
+* `BotConfig.json`example:
+   ```json
+   {
+     "TOKEN": "Your Bot Token"
+   }
+   ```
+
+---
+
+## Basic
+位於 `src/main/java/ckcsc/asadfgglie/main/Basic.java`
 
 機器人的主體程式碼
 
@@ -75,27 +123,27 @@
    public void call(Event e){} 
    ```
 
-3. 接下來請為你的服務撰寫 `RegisterEnvironment.json`，預設路徑為 `src/main/resources/RegisterEnvironment.json`
+3. 接下來請為你的服務撰寫 `RegisterEnvironment.json`，請存放於執行時命令列參數 `--configpath <path>` 所設定的資料夾
 
    並請依照以下格式撰寫:
    
-   example:
-   ```json 
-   {
-      "GFloor": { // Service class name
-         "成電服專用GG人1號": {// Service name
-            "CHANNEL_ID": 666, // Service value
-            "nowFloor": 0,     // Service value
-            "maxFloor": 0      // Service value
-         },
-         "成電服專用GG人2號": {// Service name
-            "CHANNEL_ID": 777, // Service value
-            "nowFloor": 0,     // Service value
-            "maxFloor": 0      // Service value
+   * `RegisterEnvironment.json`example:
+      ```json 
+      {
+         "GFloor": { // Service class name
+            "成電服專用GG人1號": {// Service name
+               "CHANNEL_ID": 666, // Service value
+               "nowFloor": 0,     // Service value
+               "maxFloor": 0      // Service value
+            },
+            "成電服專用GG人2號": {// Service name
+               "CHANNEL_ID": 777, // Service value
+               "nowFloor": 0,     // Service value
+               "maxFloor": 0      // Service value
+            }
          }
       }
-   }
-   ```
+      ```
 
    * `Service class name` 請務必填寫有在 `Service.initialization()` 中登記的服務物件類別名稱
    * 在同服務類別中，`Service name` 請務必為唯一名稱
