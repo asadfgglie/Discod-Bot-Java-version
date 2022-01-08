@@ -19,6 +19,7 @@ publishing-keyring.gpg
 /build/
 /out/
 /libs/
+.gradle
 
 /bin/
 
