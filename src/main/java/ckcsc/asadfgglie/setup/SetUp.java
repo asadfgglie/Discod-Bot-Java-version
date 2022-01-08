@@ -53,7 +53,9 @@ public class SetUp {
             // 擷取路徑中的jar包名
             filePath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
         }
-        filePath = filePath.substring(0, filePath.lastIndexOf("/"));
+        if(filePath.lastIndexOf("/") != -1) {
+            filePath = filePath.substring(0, filePath.lastIndexOf("/"));
+        }
         return filePath;
     }
     private static String transferPath(String path){
