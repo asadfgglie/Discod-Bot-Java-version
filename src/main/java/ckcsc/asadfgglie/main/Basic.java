@@ -20,10 +20,9 @@ import java.util.Objects;
 
 public class Basic extends ListenerAdapter {
     public static ArrayList<Register> REGISTER_LIST = new ArrayList<>();
-    public static HashMap<String, String> CONFIG_LIST = new HashMap<>();
     public static String PATH;
-    private static JSONObject REGISTER_CONFIG;
-    private static JSONObject BOT_CONFIG;
+    public static JSONObject REGISTER_CONFIG;
+    public static JSONObject BOT_CONFIG;
 
     public static void main() throws IOException {
         Services.initialization();
@@ -81,14 +80,8 @@ public class Basic extends ListenerAdapter {
 
     private static void setAllConfig() throws IOException {
         REGISTER_CONFIG = setConfig("RegisterConfig.json");
-        addConfigList("RegisterConfig.json");
 
         BOT_CONFIG = setConfig("BotConfig.json");
-        addConfigList("BotConfig.json");
-    }
-
-    private static void addConfigList(String config){
-        CONFIG_LIST.put(config, PATH + File.separator + config);
     }
 
     private static @NotNull JSONObject setConfig(String configName) throws IOException {
