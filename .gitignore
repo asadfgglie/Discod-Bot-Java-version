@@ -35,3 +35,5 @@ gradle.properties
 /.vscode/
 
 /App/
+
+*.zip
