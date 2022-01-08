@@ -4,8 +4,8 @@ tokens.json
 .version
 publishing-keyring.gpg
 
-# RegisterEnvironment config
-RegisterEnvironment.json
+# Gonfig
+*Config.json
 
 # music files
 *.mp3
@@ -21,6 +21,7 @@ RegisterEnvironment.json
 /gradle/
 /out/
 gradle.properties
+/libs/
 
 /bin/
 
@@ -32,3 +33,5 @@ gradle.properties
 
 # vscode
 /.vscode/
+
+/App/
