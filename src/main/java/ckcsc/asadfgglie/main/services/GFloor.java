@@ -58,7 +58,6 @@ public class GFloor extends Services {
     }
 
     private void gCheck(@NotNull MessageReceivedEvent event){
-        printlnInfo("Before check");
         String message = event.getMessage().getContentDisplay();
         String[] messageArray = message.split("\n");
 
@@ -66,7 +65,7 @@ public class GFloor extends Services {
         msg = msg.split("\\s+")[0];
 
         gCheckImplement(msg, event);
-        printlnInfo("After check");
+        printlnInfo("");
     }
 
     private void gCheckImplement(String msg, @NotNull MessageReceivedEvent event) {
@@ -115,7 +114,6 @@ public class GFloor extends Services {
     }
 
     private void breakFloor(@NotNull MessageReceivedEvent event){
-        printlnInfo("Before break");
         lastFloorBreaker = event.getMessage().getAuthor();
 
         MessageChannel channel = event.getChannel();
@@ -123,7 +121,6 @@ public class GFloor extends Services {
 
         lastFloorBuilder = null;
         nowFloor = 0;
-        printlnInfo("After break");
     }
 
     private @NotNull String gMessage(){
