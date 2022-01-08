@@ -14,13 +14,15 @@ public class GFloor extends Services {
     private long nowFloor = 0;
     private long maxFloor = 0;
     private User lastFloorBreaker = null;
+    private User lastFloorBuilder = null;
 
     public GFloor(){}
 
-    protected GFloor(GFloor g){
+    protected GFloor(@NotNull GFloor g){
         this.nowFloor = g.nowFloor;
         this.maxFloor = g.maxFloor;
         this.lastFloorBreaker = null;
+        this.lastFloorBuilder = null;
     }
 
     @Override
@@ -55,33 +57,29 @@ public class GFloor extends Services {
         return new GFloor(this);
     }
 
-    public void gCheck(@NotNull MessageReceivedEvent event){
+    private void gCheck(@NotNull MessageReceivedEvent event){
+        printlnInfo("Before check");
         String message = event.getMessage().getContentDisplay();
         String[] messageArray = message.split("\n");
 
-        int index = 0;
-        for(String msg: messageArray) {
-            msg = msg.split("\\s+")[0];
+        String msg = messageArray[0];
+        msg = msg.split("\\s+")[0];
 
-            if(index == 0) {
-                if(gCheckImplement(msg, event)) {
-                    break;
-                }
-            }
-            else {
-                if(msg.matches("g\\d+")) {
-                    if(gCheckImplement(msg, event)) {
-                        break;
-                    }
-                }
-            }
-
-            index++;
-        }
+        gCheckImplement(msg, event);
+        printlnInfo("After check");
     }
 
-    private boolean gCheckImplement(String msg, @NotNull MessageReceivedEvent event) {
+    private void gCheckImplement(String msg, @NotNull MessageReceivedEvent event) {
         long floor;
+        boolean isAuthorSame;
+
+        try{
+            isAuthorSame = lastFloorBuilder.getIdLong() == event.getAuthor().getIdLong();
+        }
+        catch (Exception e){
+            isAuthorSame = false;
+        }
+
         try
         {
             floor = Long.parseLong(msg.split("g")[1]);
@@ -90,44 +88,42 @@ public class GFloor extends Services {
         {
             System.out.println(e.getMessage());
             breakFloor(event);
-            return true;
+            return;
         }
 
         if (!msg.matches("g\\d+"))
         {
             breakFloor(event);
-            return true;
         }
         else if (floor - nowFloor != 1)
         {
             breakFloor(event);
-            return true;
+        }
+        else if(isAuthorSame){
+            breakFloor(event);
         }
         else
         {
+            lastFloorBuilder = event.getAuthor();
             nowFloor++;
-            printlnInfo("");
 
             if (nowFloor > maxFloor)
             {
                 maxFloor = nowFloor;
-                printlnInfo("新紀錄!");
             }
-
-            return false;
         }
     }
 
     private void breakFloor(@NotNull MessageReceivedEvent event){
+        printlnInfo("Before break");
         lastFloorBreaker = event.getMessage().getAuthor();
+
         MessageChannel channel = event.getChannel();
-
         channel.sendMessage(gMessage()).queue();
-        nowFloor = 0;
-    }
 
-    public boolean isGMessage(@NotNull String message){
-        return message.matches("-{7}\\W+\\d+\\W+\\d+\\W+-{7}");
+        lastFloorBuilder = null;
+        nowFloor = 0;
+        printlnInfo("After break");
     }
 
     private @NotNull String gMessage(){
@@ -154,22 +150,14 @@ public class GFloor extends Services {
         if(event.getChannel().getIdLong() == CHANNEL_ID){
             printMsg(event);
 
-            String messageString = event.getMessage().getContentDisplay();
             MessageType messageType = event.getMessage().getType();
 
-            if(messageType == MessageType.CHANNEL_PINNED_ADD || messageType == MessageType.THREAD_CREATED){
-                printlnInfo("別pin");
-            }
-            else if(event.getAuthor() == event.getJDA().getSelfUser()){
-                if(isGMessage(messageString)){
+            if(messageType == MessageType.DEFAULT) {
+                if (event.getAuthor() == event.getJDA().getSelfUser()) {
                     event.getChannel().pinMessageById(event.getMessageId()).queue();
+                } else {
+                    gCheck(event);
                 }
-                else{
-                    printlnInfo("別pin");
-                }
-            }
-            else{
-                gCheck(event);
             }
         }
     }
