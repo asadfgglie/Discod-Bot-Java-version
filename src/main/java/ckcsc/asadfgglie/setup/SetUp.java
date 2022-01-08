@@ -59,12 +59,31 @@ public class SetUp {
     private static String transferPath(String path){
         path = path.replace("\\", File.separator);
         path = path.replace("/", File.separator);
+
+        String osName = System.getProperty("os.name").toLowerCase();
+        if(osName.contains("linux")){
+            path = File.separator + path;
+        }
+
         return path;
     }
 }
 
 enum Option{
-    configpath("--configpath", "Usage:\njava -jar <BotJar>.jar --configpath <config-folder path>\n\nYour config-folder must contain the json file to set up the bot.");
+    configpath("--configpath",
+
+"Usage:\n" +
+    "java -jar <BotJar>.jar --configpath <config-folder path>\n\n" +
+
+    "Your config-folder must contain the json file to set up the bot.\n\n" +
+
+    "If you don't set --configpath, Bot will use the Bot's current directory on DEFAULT.)\n\n" +
+
+    "Only can use two path representation:\n" +
+    "    Absolute path\n" +
+    "    ./<dictionary>\n\n" +
+
+    "./ means the current directory.");
 
     private final String option, info;
 
