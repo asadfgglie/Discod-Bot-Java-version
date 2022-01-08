@@ -14,7 +14,7 @@ public class GFloor extends Services {
     private long nowFloor = 0;
     private long maxFloor = 0;
     private User lastFloorBreaker = null;
-    private User lastFloorBuilder = null;
+    private long lastFloorBuilderID = -1;
 
     public GFloor(){}
 
@@ -22,7 +22,7 @@ public class GFloor extends Services {
         this.nowFloor = g.nowFloor;
         this.maxFloor = g.maxFloor;
         this.lastFloorBreaker = null;
-        this.lastFloorBuilder = null;
+        this.lastFloorBuilderID = g.lastFloorBuilderID;
     }
 
     @Override
@@ -43,12 +43,21 @@ public class GFloor extends Services {
             System.out.println("\"nowFloor\" is a option to register service. Set to the default value: 0");
             this.nowFloor = 0;
         }
+
         try {
            this.maxFloor = values.getLong("maxFloor");
         }
         catch (JSONException e) {
             System.out.println("\"maxFloor\" is a option to register service. Set to the default value: 0");
             this.maxFloor = 0;
+        }
+
+        try {
+            this.lastFloorBuilderID = values.getLong("lastFloorBuilder");
+        }
+        catch (JSONException e) {
+            System.out.println("\"lastFloorBuilder\" is a option to register service. Set to the default value: 0");
+            this.lastFloorBuilderID = -1;
         }
     }
 
@@ -70,14 +79,6 @@ public class GFloor extends Services {
 
     private void gCheckImplement(String msg, @NotNull MessageReceivedEvent event) {
         long floor;
-        boolean isAuthorSame;
-
-        try{
-            isAuthorSame = lastFloorBuilder.getIdLong() == event.getAuthor().getIdLong();
-        }
-        catch (Exception e){
-            isAuthorSame = false;
-        }
 
         try
         {
@@ -98,12 +99,12 @@ public class GFloor extends Services {
         {
             breakFloor(event);
         }
-        else if(isAuthorSame){
+        else if(lastFloorBuilderID == event.getAuthor().getIdLong()){
             breakFloor(event);
         }
         else
         {
-            lastFloorBuilder = event.getAuthor();
+            lastFloorBuilderID = event.getAuthor().getIdLong();
             nowFloor++;
 
             if (nowFloor > maxFloor)
@@ -119,7 +120,7 @@ public class GFloor extends Services {
         MessageChannel channel = event.getChannel();
         channel.sendMessage(gMessage()).queue();
 
-        lastFloorBuilder = null;
+        lastFloorBuilderID = -1;
         nowFloor = 0;
     }
 
@@ -133,7 +134,7 @@ public class GFloor extends Services {
 
     @Override
     public String toString(){
-        return GFloor.class.getSimpleName() + "(serviceName: " + this.serviceName + ", CHANNEL_ID: " + this.CHANNEL_ID + ", nowFloor: " + this.nowFloor + ", maxFloor: " + this.maxFloor + ")";
+        return GFloor.class.getSimpleName() + "(serviceName: " + this.serviceName + ", CHANNEL_ID: " + this.CHANNEL_ID + ", nowFloor: " + this.nowFloor + ", maxFloor: " + this.maxFloor + ", lastFloorBuilder" + this.lastFloorBuilderID + ")";
     }
 
     @Override
