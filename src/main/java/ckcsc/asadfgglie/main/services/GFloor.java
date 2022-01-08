@@ -20,6 +20,7 @@ public class GFloor extends Services {
     protected GFloor(GFloor g){
         this.nowFloor = g.nowFloor;
         this.maxFloor = g.maxFloor;
+        this.lastFloorBreaker = null;
     }
 
     @Override
@@ -110,7 +111,7 @@ public class GFloor extends Services {
             if (nowFloor > maxFloor)
             {
                 maxFloor = nowFloor;
-                printlnInfo("");
+                printlnInfo("新紀錄!");
             }
 
             return false;
@@ -175,8 +176,9 @@ public class GFloor extends Services {
 
     @Override
     public void printlnInfo(String msg){
+        if (!msg.equals(""))
+            System.out.println(msg);
         System.out.println(this);
-        System.out.println(msg);
     }
 
     private void printMsg(MessageReceivedEvent event){
