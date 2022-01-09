@@ -56,7 +56,7 @@ public class GFloor extends Services {
             this.lastFloorBuilderID = values.getLong("lastFloorBuilder");
         }
         catch (JSONException e) {
-            System.out.println("\"lastFloorBuilder\" is a option to register service. Set to the default value: 0");
+            System.out.println("\"lastFloorBuilder\" is a option to register service. Set to the default value: -1");
             this.lastFloorBuilderID = -1;
         }
     }
