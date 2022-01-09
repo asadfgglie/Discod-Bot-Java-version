@@ -14,7 +14,7 @@ public abstract class Services implements Register {
 
     public static HashMap<String, ServiceArray> SERVICESLIST = new HashMap<>();
 
-    public static void initialization() {
+    public static void init() {
         loginService(GFloor.class.getSimpleName(), new GFloor());
     }
 
