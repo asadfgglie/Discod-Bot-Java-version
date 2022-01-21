@@ -30,22 +30,16 @@ public class JSONConfig extends JSONObject {
                     isInString = !isInString;
                 }
 
-                try {
-                    // add '\n' in front/back of the enterChar
-                    String iStr = String.valueOf(i);
-                    if (enterChar.substring(0, 3).contains(iStr) && !isInString) {
-                        // in front
-                        configStrBlr.insert(pointer + 1, "\\newLine\\");
-                        pointer += 9;
-                    } else if (enterChar.substring(3).contains(iStr) && !isInString) {
-                        // in back
-                        configStrBlr.insert(pointer, "\\newLine\\");
-                        pointer += 9;
-                    }
-                }
-                catch (Exception e){
-                    e.printStackTrace();
-                    return "";
+                // add '\n' in front/back of the enterChar
+                String iStr = String.valueOf(i);
+                if (enterChar.substring(0, 3).contains(iStr) && !isInString) {
+                    // in front
+                    configStrBlr.insert(pointer + 1, "\\newLine\\");
+                    pointer += 9;
+                } else if (enterChar.substring(3).contains(iStr) && !isInString) {
+                    // in back
+                    configStrBlr.insert(pointer, "\\newLine\\");
+                    pointer += "\\newLine\\".length();
                 }
             }
 
