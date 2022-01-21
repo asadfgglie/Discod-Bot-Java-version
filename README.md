@@ -73,25 +73,21 @@
 
 為所有服務的父類別
 
-其中 `SERVICESLIST` 記錄著可以使用的服務
+其中 `SERVICES_LIST` 記錄著可以使用的服務
 
-所有的服務皆必須在 `initialization()` 使用 `loginService()` 登記
+所有的服務皆必須在 `init()` 使用 `loginService()` 登記
 
 同時，所有服務也都需要覆寫 `copy()` 以利後續的服務註冊
 
 `copy()` 必須要回傳自己的複製物件實例
 
-請覆寫 `run()` 來讓服務運行在新的執行續中
-
-預設會會執行在新的執行續之中，如果有必要，請覆寫 `Service.call()` 方法改變執行規則
-
 ---
 
 ## Service register system
 
-1. 首先，請在 `Service.initialization()` 中，使用 `Service.loginService()` 登記，並使服務繼承 `Service` 類別
+1. 首先，請在 `Service.init()` 中，使用 `Service.loginService()` 登記，並使服務繼承 `Service` 類別
 
-2. 接下來，請在服務中覆寫 `registerByEnvironment()`、`copy()`、`run()` 這三個方法:
+2. 接下來，請在服務中覆寫 `registerByEnvironment()`、`copy()` 這兩個方法:
 
    * `copy()`
    ```Java 
@@ -110,18 +106,6 @@
    請自行依照傳入的 `json` 物件初始化服務
 
    `name` 為服務的名稱，如有需要，可以將其設為 `serviceName` 的值
-
-   * `run()`
-   ```Java
-   public void run(){}
-   ```
-   此為服務的進入點，會執行在一個新的執行續。
-
-   如果不想執行在新執行續，可以覆寫 `Service.call()` 方法:
-   * `Service.call()`
-   ```Java
-   public void call(Event e){} 
-   ```
 
 3. 接下來請為你的服務撰寫 `RegisterEnvironment.json`，請存放於執行時命令列參數 `--configpath <path>` 所設定的資料夾
 
@@ -145,6 +129,6 @@
       }
       ```
 
-   * `Service class name` 請務必填寫有在 `Service.initialization()` 中登記的服務物件類別名稱
+   * `Service class name` 請務必填寫有在 `Service.init()` 中登記的服務物件類別名稱
    * 在同服務類別中，`Service name` 請務必為唯一名稱
    * `Service value` 們會變成一個 `json` 物件和 `Service class name` 一同傳入 `registerByEnvironment()` 中
