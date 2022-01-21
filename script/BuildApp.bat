@@ -17,3 +17,7 @@ if exist build\libs\*.jar (
 else (
     echo You need to run `gradlew shadowJar` before run this script.
 )
+
+if %1=="new version" (
+    xcopy build\libs\*.jar AppVersionLibs\
+)

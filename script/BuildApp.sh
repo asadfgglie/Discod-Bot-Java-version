@@ -14,6 +14,7 @@ if [ -e $Jar ]; then
 
   echo "Copy the file."
   cp ./build/libs/*.jar ./App/
+  cp ./build/libs/*.jar ./AppVersionLibs/
   mv ./App/*.jar ./App/DiscordBot-all.jar
 
   cp -r ./resource/* ./App/
