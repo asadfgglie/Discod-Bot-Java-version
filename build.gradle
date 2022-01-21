@@ -13,7 +13,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: 'java'
 
 group 'ckcsc.asadfgglie'
-version '1.1'
+version '1.2'
 
 repositories {
     mavenCentral()
@@ -22,6 +22,9 @@ repositories {
 dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+
+    // https://mvnrepository.com/artifact/org.assertj/assertj-core
+    testImplementation 'org.assertj:assertj-core:3.22.0'
 
     // https://mvnrepository.com/artifact/net.dv8tion/JDA
     implementation group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.3'
@@ -39,6 +42,7 @@ jar {
     metadataCharset 'utf-8'
 
     manifest {
-        attributes "Main-Class": "ckcsc/asadfgglie/setup/SetUp"
+        attributes "Main-Class": "ckcsc/asadfgglie/setup/SetUp",
+                   "Implementation-Version": project.version
     }
 }
