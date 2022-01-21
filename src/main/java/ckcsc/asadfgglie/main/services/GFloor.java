@@ -1,11 +1,13 @@
 package ckcsc.asadfgglie.main.services;
 
+import ckcsc.asadfgglie.main.Basic;
 import ckcsc.asadfgglie.main.services.Register.Services;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageType;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,6 +17,7 @@ public class GFloor extends Services {
     private long maxFloor = 0;
     private User lastFloorBreaker = null;
     private long lastFloorBuilderID = -1;
+    private boolean isNeedPin = false;
 
     public GFloor(){}
 
@@ -23,10 +26,16 @@ public class GFloor extends Services {
         this.maxFloor = g.maxFloor;
         this.lastFloorBreaker = null;
         this.lastFloorBuilderID = g.lastFloorBuilderID;
+        this.isNeedPin = false;
     }
 
     @Override
-    public void registerByEnvironment(JSONObject values, String name) {
+    public Services copy() {
+        return new GFloor(this);
+    }
+
+    @Override
+    public void registerByEnvironment(@NotNull JSONObject values, String name) {
         this.serviceName = name;
 
         try {
@@ -62,8 +71,27 @@ public class GFloor extends Services {
     }
 
     @Override
-    public Services copy() {
-        return new GFloor(this);
+    public void onMessageReceived(@NotNull MessageReceivedEvent event){
+        if(event.getChannel().getIdLong() == CHANNEL_ID){
+            printMsg(event);
+
+            MessageType messageType = event.getMessage().getType();
+
+            if(messageType == MessageType.DEFAULT) {
+                if (event.getAuthor() == event.getJDA().getSelfUser()) {
+                    if(isNeedPin) {
+                        event.getChannel().pinMessageById(event.getMessageId()).queue();
+                        isNeedPin = false;
+                    }
+                } else {
+                    gCheck(event);
+
+                    gUpdateConfig();
+
+                    Basic.saveConfig(Basic.REGISTER_CONFIG);
+                }
+            }
+        }
     }
 
     private void gCheck(@NotNull MessageReceivedEvent event){
@@ -74,7 +102,16 @@ public class GFloor extends Services {
         msg = msg.split("\\s+")[0];
 
         gCheckImplement(msg, event);
-        printlnInfo("");
+
+        printlnInfo(null);
+    }
+
+    private void gUpdateConfig() {
+        JSONObject selfService = Basic.REGISTER_CONFIG.getJSONObject(GFloor.class.getSimpleName()).getJSONObject(this.serviceName);
+
+        selfService.put("maxFloor", this.maxFloor);
+        selfService.put("nowFloor", this.nowFloor);
+        selfService.put("lastFloorBuilder", this.lastFloorBuilderID);
     }
 
     private void gCheckImplement(String msg, @NotNull MessageReceivedEvent event) {
@@ -110,6 +147,7 @@ public class GFloor extends Services {
             if (nowFloor > maxFloor)
             {
                 maxFloor = nowFloor;
+                isNeedPin = true;
             }
         }
     }
@@ -138,31 +176,8 @@ public class GFloor extends Services {
     }
 
     @Override
-    public void run() {
-        if(!(e instanceof MessageReceivedEvent)){
-            return;
-        }
-
-        MessageReceivedEvent event = (MessageReceivedEvent) this.e;
-
-        if(event.getChannel().getIdLong() == CHANNEL_ID){
-            printMsg(event);
-
-            MessageType messageType = event.getMessage().getType();
-
-            if(messageType == MessageType.DEFAULT) {
-                if (event.getAuthor() == event.getJDA().getSelfUser()) {
-                    event.getChannel().pinMessageById(event.getMessageId()).queue();
-                } else {
-                    gCheck(event);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void printlnInfo(String msg){
-        if (!msg.equals(""))
+    public void printlnInfo(@Nullable String msg){
+        if (msg != null)
             System.out.println(msg);
         System.out.println(this);
     }
