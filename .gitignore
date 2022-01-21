@@ -4,7 +4,7 @@ tokens.json
 .version
 publishing-keyring.gpg
 
-# Gonfig
+# Config
 *Config.json
 
 # music files
@@ -21,8 +21,10 @@ publishing-keyring.gpg
 /libs/
 .gradle
 
-/bin/
+/AppVersionLibs
 
+/bin/
+/src/test/
 # intellij files
 /.idea/
 *.iml
@@ -35,3 +37,5 @@ publishing-keyring.gpg
 /App/
 
 *.zip
+
+/resource/Dockerfile
