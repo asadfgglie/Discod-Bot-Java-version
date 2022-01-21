@@ -1,32 +1,24 @@
 package ckcsc.asadfgglie.main.services.Register;
 
 import ckcsc.asadfgglie.main.services.GFloor;
-import net.dv8tion.jda.api.events.Event;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONObject;
 
-import java.util.*;
+import java.util.HashMap;
 
-public abstract class Services implements Register {
+public abstract class Services extends ListenerAdapter {
     protected String serviceName = null;
     protected long CHANNEL_ID = 0;
-    public Thread thread = null;
-    protected Event e = null;
 
-    public static HashMap<String, ServiceArray> SERVICESLIST = new HashMap<>();
+    public static HashMap<String, ServiceArray> SERVICES_LIST = new HashMap<>();
 
     public static void init() {
         loginService(GFloor.class.getSimpleName(), new GFloor());
     }
 
     private static void loginService(String className, Services service){
-        SERVICESLIST.put(className, new ServiceArray(service));
-    }
-
-    @Override
-    public void call(Event e) {
-        this.e = e;
-        this.thread = new Thread(this);
-        this.thread.start();
+        SERVICES_LIST.put(className, new ServiceArray(service));
     }
 
     protected Services(){}

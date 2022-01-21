@@ -13,7 +13,7 @@ public class ServiceArray {
         array = new Services[serviceNumber];
     }
 
-    public void initializeArray() {
+    public void initArray() {
         for(int i = 0; i < array.length; i++){
             array[i] = serviceClass.copy();
         }
