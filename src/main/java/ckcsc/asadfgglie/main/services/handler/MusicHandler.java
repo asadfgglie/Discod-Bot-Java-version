@@ -63,16 +63,14 @@ public class MusicHandler extends AudioEventAdapter implements AudioSendHandler{
 
     @Override
     public void onTrackEnd(AudioPlayer player, AudioTrack track, AudioTrackEndReason endReason) {
-        if((endReason == AudioTrackEndReason.STOPPED || endReason.mayStartNext) && isPlaying) {
-            AudioTrack nextTrack = playerList.poll();
-            if (nextTrack != null) {
-                audioPlayer.playTrack(nextTrack);
-            }
+        AudioTrack nextTrack = playerList.poll();
+        if((endReason == AudioTrackEndReason.STOPPED || endReason.mayStartNext) && isPlaying && nextTrack != null) {
+            audioPlayer.playTrack(nextTrack);
         }
         else {
+            isPlaying = false;
             musicPlayer.printlnInfo("Play finished!");
             musicPlayer.messageChannel.sendMessage("Play finished!").queue();
-            isPlaying = false;
         }
     }
 
