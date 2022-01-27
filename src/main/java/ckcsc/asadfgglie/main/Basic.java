@@ -229,7 +229,7 @@ public class Basic extends ListenerAdapter {
             return;
         }
         else if(command.length != 3){
-            event.getChannel().sendMessage("\nUsage:\n```\n/info <Service class> <Service name>\n```or```\n/info list\n```").queue();
+            event.getChannel().sendMessage("\nUsage:\n```\n!info <Service class> <Service name>\n```or```\n!info list\n```").queue();
             return;
         }
 
