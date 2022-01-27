@@ -1,8 +1,10 @@
 package ckcsc.asadfgglie.main.services.Register;
 
 import ckcsc.asadfgglie.main.services.GFloor;
+import ckcsc.asadfgglie.main.services.MusicPlayer;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
 import java.util.HashMap;
@@ -15,6 +17,7 @@ public abstract class Services extends ListenerAdapter {
 
     public static void init() {
         loginService(GFloor.class.getSimpleName(), new GFloor());
+        loginService(MusicPlayer.class.getSimpleName(), new MusicPlayer());
     }
 
     private static void loginService(String className, Services service){
@@ -27,6 +30,29 @@ public abstract class Services extends ListenerAdapter {
 
     public abstract Services copy();
 
-    protected abstract void printlnInfo(String msg);
-    protected void printlnErr(String msg){}
+    public void printlnInfo(String msg){
+        if (msg != null)
+            System.out.println(msg);
+        System.out.println(this + "\n");
+    }
+
+    protected void printMsg(@NotNull MessageReceivedEvent event){
+        if(event.isFromGuild()) {
+            System.out.println("<<" + event.getGuild().getName() + ">>" +
+                    " #<" + event.getChannel().getName() + "> " +
+                    event.getAuthor().getName() + ":\n" +
+                    event.getMessage().getContentDisplay() + "\n");
+        }
+        else {
+            System.out.println("<<" + event.getChannel().getName() + ">>" +
+                    event.getAuthor().getName() + ": " +
+                    event.getMessage().getContentDisplay());
+        }
+    }
+
+    protected void printlnErr(String msg){
+        if (msg != null)
+            System.err.println(msg);
+        System.err.println(this);
+    }
 }
