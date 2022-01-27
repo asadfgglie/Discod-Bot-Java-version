@@ -36,6 +36,38 @@
      X
      ```
 
+* MusicPlayer
+
+   音樂機器人服務
+
+   指令中不需要有 `<` & `>`，以下僅作為示範用
+   
+   可用指令:
+
+   * `!play <url> <volume>`: 播放音樂
+     * `url`: 音樂連結
+     * `volume`: 音量設定，預設為15
+     
+   * `!pause`: 暫停當前撥放的音樂
+   
+   * `!skip`: 跳過當前音樂
+
+   * `!stop`: 停止撥放音樂
+
+   * `!volume <volume>`: 調整音量大小
+     * `volume`: 音量大小
+
+   * `!volume`: 顯示當前音量大小
+
+
+* 可用基本指令
+
+  * `!info list`: 查詢當前已註冊服務
+
+  * `!info <Service Class> <Service name>`: 查詢對應服務的資訊
+    * `Service Class`: 在 `RegisterEnvironment.json` 中的 `Service class name`
+    * `Service name`: 在 `RegisterEnvironment.json` 中的 `Service name`
+
 ---
 
 ## SetUp
