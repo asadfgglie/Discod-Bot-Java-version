@@ -162,7 +162,7 @@ public class GFloor extends Services {
         nowFloor = 0;
     }
 
-    private @NotNull String gMessage(){
+    private String gMessage(){
         return "----------------------------\n" +
                "上次紀錄：\t" + nowFloor + " 樓\n" +
                "破壞者：\t\t" + lastFloorBreaker.getAsMention() + "\n" +
@@ -173,19 +173,5 @@ public class GFloor extends Services {
     @Override
     public String toString(){
         return GFloor.class.getSimpleName() + "(serviceName: " + this.serviceName + ", CHANNEL_ID: " + this.CHANNEL_ID + ", nowFloor: " + this.nowFloor + ", maxFloor: " + this.maxFloor + ", lastFloorBuilder" + this.lastFloorBuilderID + ")";
-    }
-
-    @Override
-    public void printlnInfo(@Nullable String msg){
-        if (msg != null)
-            System.out.println(msg);
-        System.out.println(this);
-    }
-
-    private void printMsg(MessageReceivedEvent event){
-        System.out.println( "<<" + event.getGuild().getName() + ">>" +
-                            " #<" + event.getChannel().getName() + "> " +
-                            event.getAuthor().getName() + ": " +
-                            event.getMessage().getContentDisplay());
     }
 }
