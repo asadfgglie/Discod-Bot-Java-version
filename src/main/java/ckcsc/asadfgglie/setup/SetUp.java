@@ -1,6 +1,8 @@
 package ckcsc.asadfgglie.setup;
 
 import ckcsc.asadfgglie.main.Basic;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -8,20 +10,17 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 public class SetUp {
+    private static final Logger logger = LoggerFactory.getLogger(SetUp.class.getSimpleName());
+
     public static void main(String[] argv) throws IOException {
         if(argv.length == 0){
             callBasicMain("");
         }
-        else if(argv.length == 2){
-            if(argv[0].equals(Option.configpath.getOption())){
-                callBasicMain(argv[1]);
-            }
-            else{
-                System.err.println(Option.configpath.getInfo());
-            }
+        else if(argv.length == 2 && argv[0].equals(Option.configpath.getOption())) {
+            callBasicMain(argv[1]);
         }
         else{
-            System.err.println(Option.configpath.getInfo());
+            System.out.println(Option.configpath.getInfo());
         }
     }
 
@@ -38,14 +37,13 @@ public class SetUp {
         Basic.main();
     }
 
-    private static String getPath() {
+    public static String getPath() {
         URL url = SetUp.class.getProtectionDomain().getCodeSource().getLocation();
         String filePath = null;
         try {
             filePath = URLDecoder.decode(url.getPath(), StandardCharsets.UTF_8);// 轉化為utf-8編碼
         } catch (Exception e) {
-            System.err.println("Couldn't get this jar-file local path.");
-            e.printStackTrace();
+            logger.error("Couldn't get this jar-file local path.", e);
             System.exit(1);
         }
         filePath = filePath.substring(1);

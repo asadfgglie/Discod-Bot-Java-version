@@ -1,9 +1,11 @@
 package ckcsc.asadfgglie.main;
 
-import ckcsc.asadfgglie.main.command.CommandData;
-import ckcsc.asadfgglie.main.json.JSONConfig;
+import ckcsc.asadfgglie.Exception.StartInitException;
+import ckcsc.asadfgglie.command.CommandData;
+import ckcsc.asadfgglie.json.JSONConfig;
 import ckcsc.asadfgglie.main.services.Register.ServiceArray;
 import ckcsc.asadfgglie.main.services.Register.Services;
+
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -12,10 +14,12 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import net.dv8tion.jda.internal.entities.UserById;
+
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -24,9 +28,16 @@ import java.util.Iterator;
 import java.util.Objects;
 
 public class Basic extends ListenerAdapter {
-    public static ArrayList<Services> REGISTER_LIST = new ArrayList<>();
-    public static ArrayList<User> ADMIN_USER_LIST = new ArrayList<>();
+    public final static int MAX_MESSAGE_SEND_LENGTH = 2000;
 
+    private final static Logger logger = LoggerFactory.getLogger(Basic.class.getSimpleName());
+
+    private final static ArrayList<Services> REGISTER_LIST = new ArrayList<>();
+    private final static ArrayList<User> ADMIN_USER_LIST = new ArrayList<>();
+
+    /**
+     * All about the path of OS must use this path.
+     */
     public static String PATH;
 
     public static JSONConfig REGISTER_CONFIG;
@@ -49,7 +60,7 @@ public class Basic extends ListenerAdapter {
             BUILDER.updateCommands().queue();
         }
         catch (JSONException e){
-            System.err.println("BotConfig.json need key \"TOKEN\".");
+            logger.error("BotConfig.json need key \"TOKEN\".", e);
         }
     }
 
@@ -71,18 +82,19 @@ public class Basic extends ListenerAdapter {
         if(compulsory) {
             try {
                 configReader = new BufferedReader(new InputStreamReader(new FileInputStream(PATH + File.separator + configName)));
-                System.out.println("Success load \"" + configName + "\"");
+                logger.info("Success load \"" + configName + "\"");
             } catch (FileNotFoundException e) {
-                throw new FileNotFoundException("Couldn't find \"" + configName + "\" in \"" + PATH);
+                logger.error("Couldn't find \"" + configName + "\" in \"" + PATH, e);
+                throw new StartInitException("Couldn't find \"" + configName + "\" in \"" + PATH);
             }
         }
         else{
             try {
                 configReader = new BufferedReader(new InputStreamReader(new FileInputStream(PATH + File.separator + configName)));
-                System.out.println("Success load \"" + configName + "\"");
+                logger.info("Success load \"" + configName + "\"");
             } catch (FileNotFoundException e) {
-                System.out.println("Couldn't find \"" + configName + "\" in \"" + PATH);
-                System.out.println("\"" + configName + "\" is an option to be a config.");
+                logger.info("Couldn't find \"" + configName + "\" in \"" + PATH);
+                logger.info("\"" + configName + "\" is an option to be a config.");
                 return null;
             }
         }
@@ -119,15 +131,21 @@ public class Basic extends ListenerAdapter {
 
                     Services service = serviceArray.array[i];
 
-                    service.registerByEnvironment(serviceValues.getJSONObject(serviceName), serviceName);
-
                     REGISTER_LIST.add(service);
 
-                    System.out.println("Success register service: " + service);
+                    service.basicSetting(serviceValues.getJSONObject(serviceName), serviceName);
+                    service.registerByEnvironment(serviceValues.getJSONObject(serviceName));
+
+                    if(REGISTER_LIST.contains(service)) {
+                        logger.info("Success register service: " + service);
+                    }
+                    else {
+                        logger.error("Failed register service: " + service);
+                    }
                 }
             }
             else{
-                System.err.println("Service Class \"" + serviceClass + "\" isn't exist.");
+                logger.error("Service Class \"" + serviceClass + "\" isn't exist.");
             }
         }
     }
@@ -136,7 +154,7 @@ public class Basic extends ListenerAdapter {
         if(ADMIN_USER_CONFIG != null){
             for (Iterator<String> it = ADMIN_USER_CONFIG.keys(); it.hasNext(); ) {
                 String user = it.next();
-                ADMIN_USER_LIST.add(new UserById(ADMIN_USER_CONFIG.getLong(user)));
+                ADMIN_USER_LIST.add(User.fromId(ADMIN_USER_CONFIG.getLong(user)));
             }
         }
     }
@@ -149,7 +167,8 @@ public class Basic extends ListenerAdapter {
             // We need messages in guilds to accept commands from users
             GatewayIntent.GUILD_MESSAGES,
             // We need voice states to connect to the voice channel
-            GatewayIntent.GUILD_VOICE_STATES
+            GatewayIntent.GUILD_VOICE_STATES,
+            GatewayIntent.GUILD_EMOJIS
         );
 
         try{
@@ -201,17 +220,56 @@ public class Basic extends ListenerAdapter {
         if(!cmdData.isCmd || !event.isFromGuild() || event.getAuthor().isBot()){
             return;
         }
+
         if (cmdData.cmdHeadEqual("info")) {
             info(cmdData.cmd, event);
         }
-        if(cmdData.cmdHeadEqual("stopBot")){
-            if(ADMIN_USER_LIST.contains(author)) {
-                stopBot(cmdData);
-            }
-            else {
-                event.getChannel().sendMessage("Sorry, you are not the admin.").queue();
-            }
+
+        if(!cmdData.isTargetSelf()){
+            return;
         }
+        else if(cmdData.cmdHeadEqual("stopBot")){
+            if(!ADMIN_USER_LIST.contains(author)) {
+                event.getChannel().sendMessage("Sorry, you are not the admin.").queue();
+                return;
+            }
+            stopBot();
+        }
+        else if(cmdData.cmdHeadEqual("op")){
+            if(!ADMIN_USER_LIST.contains(author)) {
+                event.getChannel().sendMessage("Sorry, you are not the admin.").queue();
+                return;
+            }
+            op(event, cmdData);
+        }
+    }
+    private void op(MessageReceivedEvent event, CommandData cmdData){
+        String newAdminID;
+        try {
+            newAdminID = CommandData.getUserID(cmdData.cmd[1]);
+        }
+        catch (StringIndexOutOfBoundsException e){
+            event.getChannel().sendMessage("Usage:\n```\n!op <@someone> <@botName>\n```").queue();
+            return;
+        }
+        if(newAdminID.equals(BUILDER.getSelfUser().getId())){
+            event.getChannel().sendMessage("Usage:\n```\n!op <@someone> <@botName>\n```").queue();
+            return;
+        }
+        User newAdmin = Objects.requireNonNull(BUILDER.getUserById(newAdminID));
+
+        addAdmin(newAdmin);
+
+        event.getChannel().sendMessage(newAdmin.getAsMention() + " now is a new admin.").queue();
+    }
+
+    private static void addAdmin (User newAdmin) {
+        if(!ADMIN_USER_LIST.contains(newAdmin)) {
+            ADMIN_USER_LIST.add(newAdmin);
+        }
+
+        ADMIN_USER_CONFIG.put(newAdmin.getName(), newAdmin.getIdLong());
+        saveConfig(ADMIN_USER_CONFIG);
     }
 
     private void info(String[] command, MessageReceivedEvent event) {
@@ -223,18 +281,33 @@ public class Basic extends ListenerAdapter {
                     message.append("\n\t")
                            .append(serviceName);
                 }
+                message.append('\n');
             }
 
             event.getChannel().sendMessage(message.append("\n```")).queue();
             return;
         }
         else if(command.length != 3){
-            event.getChannel().sendMessage("\nUsage:\n```\n!info <Service class> <Service name>\n```or```\n!info list\n```").queue();
+            event.getChannel().sendMessage("Usage:\n```\n!info <Service class> <Service name>\n```or```\n!info list\n```").queue();
             return;
         }
 
         try {
-            String json = JSONConfig.toFormatString(REGISTER_CONFIG.getJSONObject(command[1]).getJSONObject(command[2]).toString());
+            JSONObject jsonObject = REGISTER_CONFIG.getJSONObject(command[1]).getJSONObject(command[2]);
+            String json;
+            if(jsonObject.getBoolean("isInfoVisible")) {
+                jsonObject.remove("isInfoVisible");
+                json = JSONConfig.toFormatString(jsonObject.toString());
+            }
+            else{
+                try {
+                    json = "{\n\t\"description\": " + jsonObject.getString("description") + "\n}";
+                }
+                catch (JSONException e){
+                    event.getChannel().sendMessage("This service's information is invisible and doesn't have description.").queue();
+                    return;
+                }
+            }
             event.getChannel().sendMessage("```json\n" + json + "\n```").queue();
         }
         catch (JSONException e){
@@ -242,11 +315,17 @@ public class Basic extends ListenerAdapter {
         }
     }
 
-    private void stopBot(CommandData cmdData) {
-        if(cmdData.cmd[1].equals(BUILDER.getSelfUser().getAsMention().replace("<@", "<@!"))) {
-            System.out.println("======================\n\n\tShut down.\n\n======================");
-            BUILDER.shutdown();
-            System.exit(0);
-        }
+    private void stopBot () {
+        logger.info("======================");
+        logger.info("");
+        logger.info("\tShut down.");
+        logger.info("");
+        logger.info("======================");
+        BUILDER.shutdown();
+        System.exit(0);
+    }
+
+    public static void removeService(Services service){
+        REGISTER_LIST.remove(service);
     }
 }
