@@ -1,8 +1,8 @@
 package ckcsc.asadfgglie.main;
 
-import ckcsc.asadfgglie.Exception.StartInitException;
-import ckcsc.asadfgglie.command.CommandData;
-import ckcsc.asadfgglie.json.JSONConfig;
+import ckcsc.asadfgglie.util.Exception.StartInitException;
+import ckcsc.asadfgglie.util.command.CommandData;
+import ckcsc.asadfgglie.util.json.JSONConfig;
 import ckcsc.asadfgglie.main.services.Register.ServiceArray;
 import ckcsc.asadfgglie.main.services.Register.Services;
 
