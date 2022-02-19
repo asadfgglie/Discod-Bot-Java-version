@@ -4,69 +4,55 @@ import ckcsc.asadfgglie.main.Basic;
 import ckcsc.asadfgglie.main.services.Register.Services;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageType;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
-
 
 public class GFloor extends Services {
     private long nowFloor = 0;
     private long maxFloor = 0;
-    private User lastFloorBreaker = null;
+    private long lastFloorBreakerID;
     private long lastFloorBuilderID = -1;
     private boolean isNeedPin = false;
 
-    public GFloor(){}
+    private long CHANNEL_ID;
 
-    protected GFloor(@NotNull GFloor g){
-        this.nowFloor = g.nowFloor;
-        this.maxFloor = g.maxFloor;
-        this.lastFloorBreaker = null;
-        this.lastFloorBuilderID = g.lastFloorBuilderID;
-        this.isNeedPin = false;
-    }
+    public GFloor(){}
 
     @Override
     public Services copy() {
-        return new GFloor(this);
+        return new GFloor();
     }
 
     @Override
-    public void registerByEnvironment(@NotNull JSONObject values, String name) {
-        this.serviceName = name;
-
+    public void registerByEnvironment(@NotNull JSONObject values) {
         try {
             this.CHANNEL_ID = values.getLong("CHANNEL_ID");
         }
         catch (JSONException e) {
-            System.err.println("Need \"CHANNEL_ID\" to register service.");
+            logger.error("Need \"CHANNEL_ID\" to register service.", e);
         }
 
         try {
             this.nowFloor = values.getLong("nowFloor");
         }
         catch (JSONException e) {
-            System.out.println("\"nowFloor\" is a option to register service. Set to the default value: 0");
-            this.nowFloor = 0;
+            logger.warn("\"nowFloor\" is a option to register service. Set to the default value: 0");
         }
 
         try {
            this.maxFloor = values.getLong("maxFloor");
         }
         catch (JSONException e) {
-            System.out.println("\"maxFloor\" is a option to register service. Set to the default value: 0");
-            this.maxFloor = 0;
+            logger.warn("\"maxFloor\" is a option to register service. Set to the default value: 0");
         }
 
         try {
-            this.lastFloorBuilderID = values.getLong("lastFloorBuilder");
+            this.lastFloorBuilderID = values.getLong("lastFloorBuilderID");
         }
         catch (JSONException e) {
-            System.out.println("\"lastFloorBuilder\" is a option to register service. Set to the default value: -1");
-            this.lastFloorBuilderID = -1;
+            logger.warn("\"lastFloorBuilderID\" is a option to register service. Set to the default value: -1");
         }
     }
 
@@ -107,11 +93,11 @@ public class GFloor extends Services {
     }
 
     private void gUpdateConfig() {
-        JSONObject selfService = Basic.REGISTER_CONFIG.getJSONObject(GFloor.class.getSimpleName()).getJSONObject(this.serviceName);
+        JSONObject selfService = getSelfConfig();
 
         selfService.put("maxFloor", this.maxFloor);
         selfService.put("nowFloor", this.nowFloor);
-        selfService.put("lastFloorBuilder", this.lastFloorBuilderID);
+        selfService.put("lastFloorBuilderID", this.lastFloorBuilderID);
     }
 
     private void gCheckImplement(String msg, @NotNull MessageReceivedEvent event) {
@@ -153,7 +139,7 @@ public class GFloor extends Services {
     }
 
     private void breakFloor(@NotNull MessageReceivedEvent event){
-        lastFloorBreaker = event.getMessage().getAuthor();
+        lastFloorBreakerID = event.getMessage().getAuthor().getIdLong();
 
         MessageChannel channel = event.getChannel();
         channel.sendMessage(gMessage()).queue();
@@ -165,7 +151,7 @@ public class GFloor extends Services {
     private String gMessage(){
         return "----------------------------\n" +
                "上次紀錄：\t" + nowFloor + " 樓\n" +
-               "破壞者：\t\t" + lastFloorBreaker.getAsMention() + "\n" +
+               "破壞者：\t\t" + Basic.BUILDER.getUserById(lastFloorBreakerID).getAsMention() + "\n" +
                "最高紀錄：\t" + maxFloor + " 樓\n" +
                "----------------------------";
     }
