@@ -1,17 +1,17 @@
 package ckcsc.asadfgglie.main.services;
 
-import ckcsc.asadfgglie.main.command.CommandData;
+import ckcsc.asadfgglie.util.command.CommandData;
 import ckcsc.asadfgglie.main.services.Register.Services;
-import ckcsc.asadfgglie.main.services.handler.MusicHandler;
-import com.sedmelluq.discord.lavaplayer.player.AudioLoadResultHandler;
+import ckcsc.asadfgglie.main.services.handler.music.Handler;
+import ckcsc.asadfgglie.main.services.handler.music.LeaveHandler;
+import ckcsc.asadfgglie.main.services.handler.music.LoadResultHandler;
+import ckcsc.asadfgglie.main.services.handler.music.MapData;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-import com.sedmelluq.discord.lavaplayer.tools.FriendlyException;
-import com.sedmelluq.discord.lavaplayer.track.AudioPlaylist;
-import com.sedmelluq.discord.lavaplayer.track.AudioTrack;
 import net.dv8tion.jda.api.entities.AudioChannel;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.managers.AudioManager;
@@ -21,235 +21,286 @@ import org.json.JSONObject;
 import java.util.Objects;
 
 public class MusicPlayer extends Services {
-    public MessageChannel messageChannel = null;
-    private AudioChannel audioChannel = null;
-    private MusicHandler musicHandler = null;
+    public volatile MapData mapData = new MapData();
+    private AudioPlayerManager audioPlayerManager;
+
+//    private String localMusicPATH;
 
     public MusicPlayer(){}
 
-    protected MusicPlayer(@NotNull MusicPlayer musicPlayer) {
-        this.serviceName = musicPlayer.serviceName;
-        this.CHANNEL_ID = musicPlayer.CHANNEL_ID;
+    @Override
+    public void registerByEnvironment (JSONObject values) {
+//        try{
+//            localMusicPATH = values.getString("localMusicPATH");
+//        }
+//        catch (JSONException e){
+//            logger.warn("\"localMusicPATH\" is an option to set.");
+//            logger.warn("Because didn't set the \"localMusicPATH\", MusicPlayer can't play local music.");
+//        }
+        audioPlayerManager = new DefaultAudioPlayerManager();
+
+        AudioSourceManagers.registerLocalSource(audioPlayerManager);
+        AudioSourceManagers.registerRemoteSources(audioPlayerManager);
     }
 
-    @Override
-    public void registerByEnvironment(JSONObject values, String name) {
-        this.serviceName = name;
+    public void printAndSend(String str, MessageChannel messageChannel){
+        messageChannel.sendMessage(str).queue();
+        printlnInfo(str);
     }
 
     @Override
     public MusicPlayer copy() {
-        return new MusicPlayer(this);
+        return new MusicPlayer();
     }
 
     @Override
     public void onMessageReceived(@NotNull MessageReceivedEvent event) {
         CommandData cmdData = CommandData.getCmdData(event);
 
-        if(!cmdData.isCmd|| event.getAuthor().isBot() || !event.isFromGuild()){
+        if(!cmdData.isCmd ||
+           event.getAuthor().isBot() ||
+           !event.isFromGuild() ||
+           (cmdData.hasTarget() && !cmdData.isTargetSelf())){
             return;
         }
 
-        if(cmdData.cmdHeadEqual("play")){
+        if(cmdData.cmdHeadEqual("play", "pl", "p")){
+            printMsg(event);
             playMusic(cmdData, event);
-            printMsg(event);
-            messageChannel = event.getChannel();
+            return;
         }
-        else if(cmdData.cmdHeadEqual("pause")){
-            pauseMusic(event);
-            printMsg(event);
-            messageChannel = event.getChannel();
+
+        if(checkCantUseCmd(event)){
+            return;
         }
-        else if(cmdData.cmdHeadEqual("skip")){
-            skipMusic(event);
+
+        else if(cmdData.cmdHeadEqual("pause", "pa")){
             printMsg(event);
-            messageChannel = event.getChannel();
+            pauseMusic(mapData.getHandler(event.getGuild()));
         }
-        else if(cmdData.cmdHeadEqual("volume")){
+        else if(cmdData.cmdHeadEqual("skip", "sk")){
+            printMsg(event);
+            skipMusic(event.getGuild());
+        }
+        else if(cmdData.cmdHeadEqual("volume", "v")){
             if(cmdData.cmd.length == 1){
-                showVolume(event);
                 printMsg(event);
-                messageChannel = event.getChannel();
+                showVolume(event.getGuild());
             }
             else {
-                setVolume(cmdData, event);
                 printMsg(event);
-                messageChannel = event.getChannel();
+                setVolume(cmdData, event.getGuild());
             }
         }
-        else if (cmdData.cmdHeadEqual("stop")){
-            stopPlay(event);
+        else if (cmdData.cmdHeadEqual("stop", "st")){
             printMsg(event);
-            messageChannel = event.getChannel();
+            stopPlay(event.getGuild());
+        }
+        else if (cmdData.cmdHeadEqual("list", "ls")){
+            printMsg(event);
+            showPlayList(mapData.getHandler(event.getGuild()));
+        }
+        else if(cmdData.cmdHeadEqual("loop", "lp")){
+            printMsg(event);
+            mapData.getHandler(event.getGuild()).setLoop();
+            printAndSend("Loop is " + ((mapData.getHandler(event.getGuild()).isLoop) ? "on." : "off."), event.getChannel());
+        }
+        else if(cmdData.cmdHeadEqual("shuffle", "sh")){
+            printMsg(event);
+            mapData.getHandler(event.getGuild()).shufflePlayList();
+            printAndSend("Play-list is shuffled.", event.getChannel());
         }
     }
 
-    private void showVolume(MessageReceivedEvent event) {
-        if(checkCantUseCmd(event)){
-            return;
-        }
-        messageChannel.sendMessage("Now volume: " + musicHandler.getAudioPlayer().getVolume()).queue();
-        printlnInfo("Now volume: " + musicHandler.getAudioPlayer().getVolume());
+    private void showVolume (Guild guild) {
+        mapData.getMessageChannel(guild).sendMessage("Now volume: " + mapData.getHandler(guild).getAudioPlayer().getVolume()).queue();
+        printlnInfo("Now volume: " + mapData.getHandler(guild).getAudioPlayer().getVolume());
     }
 
-    private void setVolume(CommandData commandData, MessageReceivedEvent event) {
-        if(checkCantUseCmd(event)){
-            return;
-        }
+    private void setVolume(CommandData commandData, Guild guild) {
         try {
-            musicHandler.getAudioPlayer().setVolume(Integer.parseInt(commandData.cmd[1]));
-            showVolume(event);
+            mapData.getHandler(guild).getAudioPlayer().setVolume(Integer.parseInt(commandData.cmd[1]));
+            showVolume(guild);
         }
         catch (Exception e){
-            messageChannel.sendMessage("Usage:```\n!volume <int>\n```or```\n!volume\n```").queue();
+            mapData.getMessageChannel(guild).sendMessage("Usage:```\n!volume <int>\n```or```\n!volume\n```").queue();
             printlnInfo("Usage:```\n!volume <int>\n```or```\n!volume\n```");
         }
     }
 
     /**
-     * Check whether it can't use this command now.
+     * Check whether it <b>can't</b> use this command now.
      * <br>
-     * If can't, return ture, else return false.
+     * If <b>can't</b>, return ture, else return false.
      */
     private boolean checkCantUseCmd(@NotNull MessageReceivedEvent event) {
-        if(event.getGuild().getIdLong() == audioChannel.getGuild().getIdLong()) {
-            try {
-                if (Objects.requireNonNull(
-                                Objects.requireNonNull(
-                                                Objects.requireNonNull(event.getMember())
-                                                        .getVoiceState())
-                                        .getChannel())
-                        .getIdLong() != audioChannel.getIdLong()) {
-                    messageChannel.sendMessage("You are not the listener!").queue();
-                    return true;
-                }
-                else if(audioChannel == null || musicHandler.isPlaying){
-                    return false;
-                }
-                else {
-                    messageChannel.sendMessage("The bot is not playing music!").queue();
-                    return true;
-                }
-            } catch (NullPointerException e) {
-                messageChannel.sendMessage("You are not the listener!").queue();
+        AudioChannel audioChannel = mapData.getAudioChannel(event.getGuild());
+        Handler handler = mapData.getHandler(event.getGuild());
+
+        if(audioChannel == null) {
+            event.getChannel().sendMessage("The bot is not playing music!").queue();
+            return true;
+        }
+        try {
+            if (event.getMember().getVoiceState().getChannel().getIdLong() != audioChannel.getIdLong()) {
+                event.getChannel().sendMessage("You are not the listener!").queue();
                 return true;
             }
+            else if(handler.isPlaying){
+                return false;
+            }
+        } catch (NullPointerException e) {
+            event.getChannel().sendMessage("You are not the listener!").queue();
+            return true;
         }
-        return true;
+        return false;
     }
 
-    private void skipMusic(MessageReceivedEvent event) {
-        if(checkCantUseCmd(event)){
-            return;
-        }
-        printlnInfo("Skip " + musicHandler.getAudioPlayer().getPlayingTrack().getInfo().title);
-        messageChannel.sendMessage("Skip " + musicHandler.getAudioPlayer().getPlayingTrack().getInfo().title).queue();
-        musicHandler.getAudioPlayer().stopTrack();
+    /**
+     * Skip the current music by using <b>stopTrack()</b>.
+     */
+    private void skipMusic(Guild guild) {
+        printlnInfo("Skip " + mapData.getHandler(guild).getAudioPlayer().getPlayingTrack().getInfo().title);
+        mapData.getMessageChannel(guild).sendMessage("Skip " + mapData.getHandler(guild).getAudioPlayer().getPlayingTrack().getInfo().title).queue();
+        mapData.getHandler(guild).getAudioPlayer().stopTrack();
     }
 
-    private void pauseMusic(@NotNull MessageReceivedEvent event) {
-        if(checkCantUseCmd(event)){
-            return;
-        }
-        musicHandler.getAudioPlayer().setPaused(!musicHandler.getAudioPlayer().isPaused());
+    private void pauseMusic(Handler handler) {
+        handler.getAudioPlayer().setPaused(!handler.getAudioPlayer().isPaused());
     }
 
+    private void showPlayList(Handler handler){
+        handler.showPlayList();
+    }
+
+    // TODO: 確認可以撥放本地音樂 - 無法撥放
     private void playMusic(@NotNull CommandData commandData, MessageReceivedEvent event) {
-        if(commandData.cmd.length < 2){
-            messageChannel.sendMessage("Usage:```\n!play <url>\n```or```\n!play <url> <volume>\n````url`: The music url.\n``volume`: Set the initial volume. Need Integer.").queue();
+        boolean isLocal = false;
+        String usage = "Usage:```\n!play <url>\n```or```\n!play <url> <volume>\n````or```\n!play local\n````url`: The music url.\n``volume`: Set the initial volume. Need Integer.\n`!play local` will play the bot's local musics.";
+        if (commandData.cmd.length < 2) {
+            event.getChannel().sendMessage(usage).queue();
+            return;
         }
-        String url = commandData.cmd[1];
-
+        /*
+        if(commandData.cmd[1].equals("local")){
+            if(localMusicPATH == null){
+                messageChannel.sendMessage("Admins didn't tell me where is local musics.\nIf you want to know about more information, please call admins.").queue();
+                return;
+            }
+            else{
+                isLocal = true;
+            }
+        }
+        */
+        AudioChannel audioChannel;
         try {
-            audioChannel = Objects.requireNonNull(
-                                Objects.requireNonNull(
-                                    Objects.requireNonNull(
-                                            event.getMember()
-                                    )
-                                    .getVoiceState()
-                                )
-                           .getChannel()
-            );
+            audioChannel = Objects.requireNonNull(event.getMember().getVoiceState().getChannel());
         }
-        catch (Exception e){
+        catch (Exception e) {
             event.getChannel().sendMessage("You must need in the Voice Channel to let bot know where to play music!").queue();
             return;
         }
 
-        AudioManager audioManager = event.getGuild().getAudioManager();
+        String url = commandData.cmd[1];
 
-        // Here we finally connect to the target voice channel,
-        // and it will automatically start pulling the audio from the MySendHandler instance
-        audioManager.openAudioConnection(audioChannel);
+        if(mapData.getHandler(event.getGuild()) == null) {
+            AudioPlayer audioPlayer = audioPlayerManager.createPlayer();
+            Handler handler = new Handler(audioPlayer, this);
+            audioPlayer.addListener(handler);
 
-        AudioPlayerManager audioPlayerManager = new DefaultAudioPlayerManager();
-        AudioSourceManagers.registerRemoteSources(audioPlayerManager);
-
-        AudioPlayer audioPlayer = audioPlayerManager.createPlayer();
-        musicHandler = new MusicHandler(audioPlayer, this);
-        audioPlayer.addListener(musicHandler);
-
-
-        if(commandData.cmd.length == 3) {
             try {
-                audioPlayer.setVolume(Integer.parseInt(commandData.cmd[2]));
+                handler.getAudioPlayer().setVolume(Integer.parseInt(commandData.cmd[2]));
                 printlnInfo("Set volume: " + commandData.cmd[2]);
             }
-            catch (Exception ignore){}
-        }
-        else{
-            audioPlayer.setVolume(15);
-        }
-
-
-        try {
-            audioManager.setSendingHandler(musicHandler);
-        }
-        catch (Exception e){
-            event.getChannel().sendMessage("The url must start with `https://` or `http://`.").queue();
-        }
-
-        audioPlayerManager.loadItem(url, new AudioLoadResultHandler() {
-            @Override
-            public void trackLoaded(AudioTrack track) {
-                musicHandler.addTrack(track);
-                musicHandler.playList();
+            catch (Exception ignore) {
+                if (!handler.isPlaying) {
+                    handler.getAudioPlayer().setVolume(15);
+                }
             }
 
-            @Override
-            public void playlistLoaded(AudioPlaylist playlist) {
-                musicHandler.addAllTracks(playlist);
-                musicHandler.playList();
-            }
+            LeaveHandler leaveHandler = new LeaveHandler(audioChannel, handler, this);
+            leaveHandler.setName(LeaveHandler.class.getSimpleName() + " - " + audioChannel.getName());
+            leaveHandler.start();
 
-            @Override
-            public void noMatches() {
-                event.getChannel().sendMessage("Can't play the music from `" + url + "`.").queue();
-            }
+            mapData.put(audioChannel, event.getChannel(), handler, leaveHandler);
 
-            @Override
-            public void loadFailed(FriendlyException exception) {
-                event.getChannel().sendMessage("Some thing is go in wrong.\nPlease contact the administrator.").queue();
-                exception.printStackTrace();
+            connectChannel(audioChannel);
+
+            LoadResultHandler loadResultHandler = new LoadResultHandler(handler, url, mapData);
+
+            if (isLocal) {
+                /*
+                File musics = new File(localMusicPATH);
+                if(musics.isDirectory()) {
+                    if(musics.listFiles() != null) {
+                        for (File music : musics.listFiles()) {
+                            logger.info(music.getPath());
+                            // TODO: 修復此問題 - 無法撥放本地音樂
+                            audioPlayerManager.loadItem(music.getPath(), loadResultHandler);
+                        }
+                    }
+                    else{
+                        logger.error(localMusicPATH + " is an empty directory.");
+                    }
+                }
+                else {
+                    audioPlayerManager.loadItem(localMusicPATH, loadResultHandler);
+                }
+                */
             }
-        });
+            else {
+                audioPlayerManager.loadItem(url, loadResultHandler);
+            }
+        }
+        else if (isLocal) {
+                /*
+                File musics = new File(localMusicPATH);
+                if(musics.isDirectory()) {
+                    if(musics.listFiles() != null) {
+                        for (File music : musics.listFiles()) {
+                            logger.info(music.getPath());
+                            // TODO: 修復此問題 - 無法撥放本地音樂
+                            audioPlayerManager.loadItem(music.getPath(), loadResultHandler);
+                        }
+                    }
+                    else{
+                        logger.error(localMusicPATH + " is an empty directory.");
+                    }
+                }
+                else {
+                    audioPlayerManager.loadItem(localMusicPATH, loadResultHandler);
+                }
+                */
+        }
+        else {
+            audioPlayerManager.loadItem(url, new LoadResultHandler(mapData.getHandler(event.getGuild()), url, mapData));
+        }
     }
 
-    private void stopPlay(@NotNull MessageReceivedEvent event){
-        if(checkCantUseCmd(event)){
-            return;
-        }
-        musicHandler.isPlaying = false;
-        musicHandler.getAudioPlayer().destroy();
-        event.getGuild().getAudioManager().closeAudioConnection();
+    private void stopPlay(Guild guild){
+        mapData.getHandler(guild).isPlaying = false;
+        mapData.getHandler(guild).getAudioPlayer().destroy();
+        guild.getAudioManager().closeAudioConnection();
+
+        mapData.remove(mapData.getHandler(guild));
+    }
+
+    private void connectChannel(@NotNull AudioChannel audioChannel) {
+        // Here we finally connect to the target voice channel,
+        // and it will automatically start pulling the audio from the Handler instance
+
+        AudioManager audioManager = audioChannel.getGuild().getAudioManager();
+        audioManager.openAudioConnection(audioChannel);
+        audioManager.setSendingHandler(mapData.getHandler(audioChannel));
+
+        printAndSend("Connect to " + audioChannel.getAsMention(), mapData.getMessageChannel(audioChannel.getGuild()));
     }
 
     public String toString(){
-        try {
-            return MusicPlayer.class.getSimpleName() + "(serviceName: " + this.serviceName + ", playInChannel: " + this.audioChannel.getName() + ", playInGuild: " + this.audioChannel.getGuild().getName() + ")";
-        }
-        catch (NullPointerException e){
-            return MusicPlayer.class.getSimpleName() + "(serviceName: " + this.serviceName + ")";
-        }
+        return MusicPlayer.class.getSimpleName() + "(serviceName: " + this.serviceName + ")";
+    }
+
+    public void leave (AudioChannel audioChannel) {
+        audioChannel.getGuild().getAudioManager().closeAudioConnection();
     }
 }
