@@ -1,4 +1,4 @@
-package ckcsc.asadfgglie.main.json;
+package ckcsc.asadfgglie.util.json;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
