@@ -4,6 +4,7 @@ import ckcsc.asadfgglie.main.Basic;
 import ckcsc.asadfgglie.main.services.AbstractAI;
 import ckcsc.asadfgglie.main.services.Register.Services;
 import ckcsc.asadfgglie.util.Array;
+import ckcsc.asadfgglie.util.Path;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,6 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
 
 public class MNIST extends AbstractAI {
     public MNIST(){}
@@ -31,12 +31,9 @@ public class MNIST extends AbstractAI {
             return;
         }
 
-        Message message = event.getMessage();
-        List<Message.Attachment> attachments = message.getAttachments();
-
-        for(Message.Attachment attachment :attachments){
+        for(Message.Attachment attachment : event.getMessage().getAttachments()){
             if(attachment.isImage()){
-                String path = Basic.PATH + "\\tmp\\";
+                String path = Path.transferPath(Basic.PATH + "\\tmp\\");
 
                 File tmp = new File(path);
                 if(!tmp.exists() && !tmp.isDirectory()){
@@ -46,19 +43,17 @@ public class MNIST extends AbstractAI {
 
                 attachment.downloadToFile(path + attachment.getFileName()).thenAccept(file -> {
                     logger.info("Get the image on " + attachment.getUrl());
-                    logger.info("Save the image on " + path + attachment.getFileName());
-
+                    logger.info("Save the image on " + file.getAbsolutePath());
                     int prediction;
                     try {
                         prediction = predictNumber(file);
+                        logger.info("I guess it is "+ prediction + ".");
+                        event.getChannel().sendMessage("I guess it is "+ prediction + ".").queue();
                     }
                     catch (IOException e){
                         logger.error("Couldn't read this image.", e);
                         event.getChannel().sendMessage("Couldn't read this image.").queue();
-                        return;
                     }
-
-                    event.getChannel().sendMessage("I guess it is "+ prediction + ".").queue();
                 });
             }
         }
@@ -74,7 +69,7 @@ public class MNIST extends AbstractAI {
 
         Array.divide(pixels, 255);
 
-        try(Tensor<Float> tensor = Tensor.create(pixels, Float.class)){
+        try(Tensor<Float> tensor = Tensor.create(new float[][][]{pixels}, Float.class)){
             predictionArray = modelBundle.session()
                     .runner()
                     .feed(inputName, tensor)
