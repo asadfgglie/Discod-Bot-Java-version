@@ -11,7 +11,7 @@
 
 目前已有服務:
 
-* GFloor
+#### GFloor
 
    此服務為檢查頻道是否有按照G樓規則發言
 
@@ -36,7 +36,7 @@
      X
      ```
 
-* MusicPlayer
+#### MusicPlayer
 
    音樂機器人服務
 
