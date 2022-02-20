@@ -45,20 +45,34 @@
    可用指令:
 
    * `!play <url> <volume>`: 播放音樂
+     * 可用縮寫 `pl` `p` 取代 `play`
      * `url`: 音樂連結
      * `volume`: 音量設定，預設為15
      
-   * `!pause`: 暫停當前撥放的音樂
+   * `!pause`: 暫停/繼續當前撥放的音樂
+     * 可用縮寫 `pa` 取代 `pause`
    
    * `!skip`: 跳過當前音樂
-
+     * 可用縮寫 `sk` 取代 `skip`
+     
    * `!stop`: 停止撥放音樂
+     * 可用縮寫 `st` 取代 `stop`
 
    * `!volume <volume>`: 調整音量大小
+     * 可用縮寫 `v` 取代 `volume`
      * `volume`: 音量大小
 
    * `!volume`: 顯示當前音量大小
+     * 可用縮寫 `v` 取代 `volume`
 
+   * `!loop` : 開啟/關閉循環播放
+     * 可用縮寫 `lp` 取代 `loop`
+   
+   * `!list` : 顯示當前待播清單
+     * 可用縮寫 `ls` 取代 `list`
+   
+   * `!shuffle` : 打亂待播清單
+     * 可用縮寫 `sh` 取代 `shuffle`
 
 * 可用基本指令
 
