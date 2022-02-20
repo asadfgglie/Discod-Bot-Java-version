@@ -59,42 +59,36 @@ jar {
 }
 
 tasks.register("refreshResource", Copy){
-    dependsOn tasks.cleanAppResource
-    doLast {
-        println "Refresh App's resource."
-    }
-    from resourceDir
-    into AppDir
-}
-tasks.register("cleanAppResource", Delete){
     FileCollection deleteCollection = AppDir.files(AppDir.asFile.listFiles())
     delete deleteCollection.asFileTree.matching {
         exclude "${rootProject.name}-all.jar"
         include "**/*"
     }
+    println "Refresh App's resource."
+    from resourceDir
+    into AppDir
 }
 
-tasks.register('BuildApp', Delete){
-    dependsOn tasks.renameInApp
+tasks.register('BuildApp', Copy){
     dependsOn tasks.refreshResource
+
+    from tasks.shadowJar
+    if(AppDir.file("${rootProject.name}-all.jar").asFile.exists()){
+        delete AppDir.asFileTree.matching{
+            include "${rootProject.name}-all.jar"
+        }
+    }
+    rename "${rootProject.name}-${version}-all.jar", "${rootProject.name}-all.jar"
+    into AppDir
+
     delete AppDir.asFileTree.matching{
         include "*.jar"
         exclude "${rootProject.name}-all.jar"
     }
 }
-tasks.register('copyToApp', Copy){
-    dependsOn tasks.shadowJar
-    from layout.buildDirectory.file("libs/${rootProject.name}-${version}-all.jar")
-    into AppDir
-}
-tasks.register("renameInApp", Copy){
-    dependsOn tasks.copyToApp
-    from AppDir.file("${rootProject.name}-${version}-all.jar")
-    rename "${rootProject.name}-${version}-all.jar", "${rootProject.name}-all.jar"
-    into AppDir
-}
 
-tasks.register("SaveNewVersion", Copy){
+tasks.register("saveNewVersion", Copy){
+    dependsOn tasks.shadowJar
     from layout.buildDirectory.dir("libs")
     layout.buildDirectory.dir("libs").get().asFileTree.forEach({file ->
         AppVersionLibsDir.getAsFileTree().forEach({already ->
@@ -110,7 +104,7 @@ tasks.register("SaveNewVersion", Copy){
 tasks.register('packageApp', Zip) {
     dependsOn tasks.BuildApp
 
-    archiveFileName = "App-${version}.zip"
+    archiveFileName = "App.zip"
     destinationDirectory = layout.projectDirectory
 
     from AppDir
