@@ -1,6 +1,7 @@
 package ckcsc.asadfgglie.setup;
 
 import ckcsc.asadfgglie.main.Basic;
+import ckcsc.asadfgglie.util.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +11,6 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 public class SetUp {
-    private static final Logger logger = LoggerFactory.getLogger(SetUp.class.getSimpleName());
 
     public static void main(String[] argv) throws IOException {
         if(argv.length == 0){
@@ -26,47 +26,15 @@ public class SetUp {
 
     private static void callBasicMain(String path) throws IOException {
         if(path.startsWith(".")) {
-            Basic.PATH = transferPath(getPath() + path.substring(1));
+            Basic.PATH = Path.transferPath(Path.getPath() + path.substring(1));
         }
         else if(path.equals("")){
-            Basic.PATH = transferPath(getPath());
+            Basic.PATH = Path.transferPath(Path.getPath());
         }
         else {
-            Basic.PATH = transferPath(path);
+            Basic.PATH = Path.transferPath(path);
         }
         Basic.main();
-    }
-
-    public static String getPath() {
-        URL url = SetUp.class.getProtectionDomain().getCodeSource().getLocation();
-        String filePath = null;
-        try {
-            filePath = URLDecoder.decode(url.getPath(), StandardCharsets.UTF_8);// 轉化為utf-8編碼
-        } catch (Exception e) {
-            logger.error("Couldn't get this jar-file local path.", e);
-            System.exit(1);
-        }
-        filePath = filePath.substring(1);
-        if (filePath.endsWith(".jar")) {// 可執行jar包執行的結果裡包含".jar"
-            // 擷取路徑中的jar包名
-            filePath = filePath.substring(0, filePath.lastIndexOf("/") + 1);
-        }
-        if(filePath.lastIndexOf("/") != -1) {
-            filePath = filePath.substring(0, filePath.lastIndexOf("/"));
-        }
-        return filePath;
-    }
-
-    private static String transferPath(String path){
-        path = path.replace("\\", File.separator);
-        path = path.replace("/", File.separator);
-
-        String osName = System.getProperty("os.name").toLowerCase();
-        if(osName.contains("linux")){
-            path = File.separator + path;
-        }
-
-        return path;
     }
 }
 
