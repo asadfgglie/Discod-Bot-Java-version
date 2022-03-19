@@ -4,6 +4,7 @@ import ckcsc.asadfgglie.main.Basic;
 import ckcsc.asadfgglie.main.services.Register.Services;
 import net.dv8tion.jda.api.entities.MessageChannel;
 import net.dv8tion.jda.api.entities.MessageType;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
@@ -12,7 +13,7 @@ import org.json.JSONObject;
 public class GFloor extends Services {
     private long nowFloor = 0;
     private long maxFloor = 0;
-    private long lastFloorBreakerID;
+    private User lastFloorBreaker;
     private long lastFloorBuilderID = -1;
     private boolean isNeedPin = false;
 
@@ -139,7 +140,7 @@ public class GFloor extends Services {
     }
 
     private void breakFloor(@NotNull MessageReceivedEvent event){
-        lastFloorBreakerID = event.getMessage().getAuthor().getIdLong();
+        lastFloorBreaker = event.getMessage().getAuthor();
 
         MessageChannel channel = event.getChannel();
         channel.sendMessage(gMessage()).queue();
@@ -149,17 +150,9 @@ public class GFloor extends Services {
     }
 
     private String gMessage(){
-        String breaker;
-        try {
-            breaker = Basic.BUILDER.getUserById(lastFloorBreakerID).getAsMention();
-        }
-        catch (NullPointerException e){
-            breaker = "取得違建仔時發生錯誤!";
-            logger.error(breaker, e);
-        }
         return "----------------------------\n" +
                "上次紀錄：\t" + nowFloor + " 樓\n" +
-               "破壞者：\t\t" + breaker + "\n" +
+               "破壞者：\t\t" + lastFloorBreaker.getAsMention() + "\n" +
                "最高紀錄：\t" + maxFloor + " 樓\n" +
                "----------------------------";
     }
