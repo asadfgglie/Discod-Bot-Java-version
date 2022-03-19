@@ -154,7 +154,7 @@ public class GFloor extends Services {
             breaker = Basic.BUILDER.getUserById(lastFloorBreakerID).getAsMention();
         }
         catch (NullPointerException e){
-            breaker = "取得違建仔時發生誤!";
+            breaker = "取得違建仔時發生錯誤!";
             logger.error(breaker, e);
         }
         return "----------------------------\n" +
