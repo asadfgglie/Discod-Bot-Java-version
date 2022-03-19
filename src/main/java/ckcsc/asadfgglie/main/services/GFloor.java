@@ -149,9 +149,17 @@ public class GFloor extends Services {
     }
 
     private String gMessage(){
+        String breaker;
+        try {
+            breaker = Basic.BUILDER.getUserById(lastFloorBreakerID).getAsMention();
+        }
+        catch (NullPointerException e){
+            breaker = "取得違建仔時發生誤!";
+            logger.error(breaker, e);
+        }
         return "----------------------------\n" +
                "上次紀錄：\t" + nowFloor + " 樓\n" +
-               "破壞者：\t\t" + Basic.BUILDER.getUserById(lastFloorBreakerID).getAsMention() + "\n" +
+               "破壞者：\t\t" + breaker + "\n" +
                "最高紀錄：\t" + maxFloor + " 樓\n" +
                "----------------------------";
     }
