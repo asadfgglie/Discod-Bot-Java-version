@@ -13,7 +13,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: 'java'
 
 group 'ckcsc.asadfgglie'
-version '1.4'
+version '1.4.1'
 
 Directory AppDir = layout.getProjectDirectory().dir("App")
 Directory resourceDir = layout.getProjectDirectory().dir("resource")
@@ -34,7 +34,7 @@ dependencies {
     testImplementation 'org.assertj:assertj-core:3.22.0'
 
     // https://mvnrepository.com/artifact/net.dv8tion/JDA
-    implementation 'ch.qos.logback:logback-classic:1.2.10'
+    implementation 'ch.qos.logback:logback-classic:1.2.11'
     implementation group: 'net.dv8tion', name: 'JDA', version: '5.0.0-alpha.3'
     // https://mvnrepository.com/artifact/org.json/json
     implementation group: 'org.json', name: 'json', version: '20211205'
