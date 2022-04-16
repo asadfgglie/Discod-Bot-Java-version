@@ -27,7 +27,7 @@ public class CommandData {
     }
 
     public static String getUserID(String contentRaw){
-        return contentRaw.substring(3, contentRaw.length() - 1);
+        return contentRaw.substring(2, contentRaw.length() - 1);
     }
 
     public boolean isTargetSelf(){
