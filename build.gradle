@@ -13,7 +13,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 apply plugin: 'java'
 
 group 'ckcsc.asadfgglie'
-version '1.4.1'
+version '1.4.2'
 
 Directory AppDir = layout.getProjectDirectory().dir("App")
 Directory resourceDir = layout.getProjectDirectory().dir("resource")
