@@ -77,7 +77,7 @@ public abstract class Services extends ListenerAdapter {
         catch (JSONException e){
             this.logger.warn("\"isInfoVisible\" doesn't set.");
             this.logger.warn("\"isInfoVisible\" will be set true by default.");
-            this.logger.warn("If \"isInfoVisible\" set to false, other discord server member still con look this service description.");
+            this.logger.warn("If \"isInfoVisible\" set to false, other discord server member still can look this service description.");
         }
     }
 
