@@ -64,7 +64,7 @@ public class GFloor extends Services {
 
             MessageType messageType = event.getMessage().getType();
 
-            if(messageType == MessageType.DEFAULT) {
+            if(messageType == MessageType.DEFAULT || messageType == MessageType.INLINE_REPLY) {
                 if (event.getAuthor() == event.getJDA().getSelfUser()) {
                     if(isNeedPin) {
                         event.getChannel().pinMessageById(event.getMessageId()).queue();
