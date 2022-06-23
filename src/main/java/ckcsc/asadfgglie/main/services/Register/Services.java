@@ -5,7 +5,9 @@ import ckcsc.asadfgglie.main.services.GFloor;
 import ckcsc.asadfgglie.main.services.ai.AutoReply;
 import ckcsc.asadfgglie.main.services.ai.MNIST;
 import ckcsc.asadfgglie.main.services.MusicPlayer;
+import net.dv8tion.jda.api.events.message.GenericMessageEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
@@ -88,17 +90,24 @@ public abstract class Services extends ListenerAdapter {
         setDescription(values);
     }
 
-    protected void printMsg(@NotNull MessageReceivedEvent event){
-        if(event.isFromGuild()) {
-            logger.info("<<" + event.getGuild().getName() + ">>" +
-                    " #<" + event.getChannel().getName() + "> " +
-                    event.getAuthor().getName() + ": " +
-                    event.getMessage().getContentDisplay());
+    protected void printMsg(@NotNull GenericMessageEvent e){
+        if(e instanceof MessageReceivedEvent) {
+            MessageReceivedEvent event = (MessageReceivedEvent) e;
+            if (event.isFromGuild()) {
+                logger.info("<<" + event.getGuild().getName() + ">>" + " #<" + event.getChannel().getName() + "> " + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
+            }
+            else {
+                logger.info("<<" + event.getChannel().getName() + ">>" + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
+            }
         }
-        else {
-            logger.info("<<" + event.getChannel().getName() + ">>" +
-                    event.getAuthor().getName() + ": " +
-                    event.getMessage().getContentDisplay());
+        else if(e instanceof MessageUpdateEvent){
+            MessageUpdateEvent event = (MessageUpdateEvent) e;
+            if (event.isFromGuild()) {
+                logger.info("<<" + event.getGuild().getName() + ">>" + " #<" + event.getChannel().getName() + "> " + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
+            }
+            else {
+                logger.info("<<" + event.getChannel().getName() + ">>" + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
+            }
         }
     }
 }
