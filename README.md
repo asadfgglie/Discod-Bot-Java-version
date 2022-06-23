@@ -1,180 +1,234 @@
 # Discord Bot - Java version
 
+## Video Demo:  <URL HERE>
+
+## Description:
+
 ---
 
-主要分四個區塊:
+Here are the four important part:
 
 * SetUp
 * Basic
 * Service
 * Service register system
 
-目前已有服務:
-
-#### GFloor
-
-   此服務為檢查頻道是否有按照G樓規則發言
-
-   G樓規則:
-
-   * 在所有文字訊息前都必須以 `g數字` 開頭
-   * `g數字` 中，`數字` 表示樓層
-   * 樓層必須從 `1` 樓開始建造，下一個發言人必須要接著蓋一層樓
-   * 同一則訊息不可以換行來連續建樓，同一人也不可以連續建樓
-     ```
-     User1:
-     g1 haha
-     g2 666
-     g3 777
-     (僅視為 g1 樓)
-     
-     User2:
-     g1 haha
-     
-     User2:
-     g2 666
-     X
-     ```
-
-#### MusicPlayer
-
-   音樂機器人服務
-
-   指令中不需要有 `<` & `>`，以下僅作為示範用
-   
-   可用指令:
-
-   * `!play <url> <volume>`: 播放音樂
-     * 可用縮寫 `pl` `p` 取代 `play`
-     * `url`: 音樂連結
-     * `volume`: 音量設定，預設為15
-     
-   * `!pause`: 暫停/繼續當前撥放的音樂
-     * 可用縮寫 `pa` 取代 `pause`
-   
-   * `!skip`: 跳過當前音樂
-     * 可用縮寫 `sk` 取代 `skip`
-     
-   * `!stop`: 停止撥放音樂
-     * 可用縮寫 `st` 取代 `stop`
-
-   * `!volume <volume>`: 調整音量大小
-     * 可用縮寫 `v` 取代 `volume`
-     * `volume`: 音量大小
-
-   * `!volume`: 顯示當前音量大小
-     * 可用縮寫 `v` 取代 `volume`
-
-   * `!loop` : 開啟/關閉循環播放
-     * 可用縮寫 `lp` 取代 `loop`
-   
-   * `!list` : 顯示當前待播清單
-     * 可用縮寫 `ls` 取代 `list`
-   
-   * `!shuffle` : 打亂待播清單
-     * 可用縮寫 `sh` 取代 `shuffle`
-
-* 可用基本指令
-
-  * `!info list`: 查詢當前已註冊服務
-
-  * `!info <Service Class> <Service name>`: 查詢對應服務的資訊
-    * `Service Class`: 在 `RegisterEnvironment.json` 中的 `Service class name`
-    * `Service name`: 在 `RegisterEnvironment.json` 中的 `Service name`
-
 ---
 
 ## SetUp
-位於 `src/main/java/ckcsc/asadfgglie/setup/SetUp.java`
 
-為程式進入點
+It is in `src/main/java/ckcsc/asadfgglie/setup/SetUp.java`.
 
-請在命令列中傳入 `--configpath <path>` 來指定 `config-folder` 的儲存路徑
+It is the enterpoint.
 
-若沒有進行指定，預設將以本檔案所在目錄為 `config-folder`(若已經打包成Jar檔，將設為Jar所在目錄)
+Use `--configpath <path>` to set `config-folder` path.
 
-`config-folder` 中，必須存在 `BotConfig.json`
+If you don't set `config-folder`, it will be set to the `SetUp.java`'s current directory by default.
 
-* `BotConfig.json`example:
+If you have packed all the code into an jar file by `/gradlew packageApp`, it will be set to the JAR file's current directory by default.
+
+In `config-folder`, it must exist `BotConfig.json`.
+
+* `BotConfig.json` example:
    ```json
    {
      "TOKEN": "Your Bot Token"
    }
    ```
 
+In `config-folder`, it need the file called `RegisterConfig.json`.
+
+It is the more information that you can go to Part `Service register system`.
+
+Some command of this bot need the admin permission, you can write a file called `AdminConfig.json`.
+
+* `AdminConfig.json` example:
+  ```json
+  {
+    "YOUR_COUNT_NAME#YOUR_TAG": YOUR_COUNT_ID
+  }
+  ```
+
 ---
 
 ## Basic
-位於 `src/main/java/ckcsc/asadfgglie/main/Basic.java`
 
-機器人的主體程式碼
+It is in `src/main/java/ckcsc/asadfgglie/main/Basic.java`.
 
-主要用於接收 Discord 事件，並使註冊的服務運作
+The bot's basic framework.
+
+Mainly be used to receive Discord events and make registered services work.
+
+* Basic Commands Available
+
+  * `!info list`: Query currently registered services.
+
+    * `!info <Service Class> <Service name>`: Query information about the corresponding service
+    * `Service Class`: `Service class name` in `RegisterEnvironment.json`
+    * `Service name`: `Service name` in `RegisterEnvironment.json`
+
+  * `!stopBot @bot`: Shutdown the bot. Commander must be an admin.
+    * `@bot`: You must use the tag method to fill in the name of the bot.
+  
+  * `!op @USER`: Add an new admin into `AdminConfig.json`.
+      * `@USER`: You must use the tag method to fill in the name of the user.
 
 ---
 
 ## Service
 
-位於 `src/main/java/ckcsc/asadfgglie/main/services/Register/Services.java`
+It is in `src/main/java/ckcsc/asadfgglie/main/services/Register/Services.java`.
 
-為所有服務的父類別
+It is parent class for all services.
 
-其中 `SERVICES_LIST` 記錄著可以使用的服務
+There records all of the available services in `SERVICES_LIST`.
 
-所有的服務皆必須在 `init()` 使用 `loginService()` 登記
+All services must be registered in `init()` using `loginService()`.
 
-同時，所有服務也都需要覆寫 `copy()` 以利後續的服務註冊
+At the same time, all services also need to override `copy()` for subsequent service registration.
 
-`copy()` 必須要回傳自己的複製物件實例
+`copy()` must return its own copy object instance.
+
+---
+
+#### GFloor
+
+   This service is to check whether the channel is speaking in accordance with the rules of GFloor.
+
+   The rules of GFloor:
+
+   1. All text messages must start with the `g<number>`
+   2. In `g<number>`, the `<number>` represents this floor.
+   3. Floors must be constructed from floor `1` and the next speaker must build a floor after.
+   4. The same message cannot newline to build an new floor continuously, and the same person cannot build an new floor continuously.
+   5. It is not allowed to take back the message, taking back the message is regarded as demolishing GFloor.
+   6. You can edit the message, but the message must comply with the regulations of GFloor after editing, otherwise it will be regarded as demolishing GFloor.
+
+   Example:
+
+
+      User1:
+      g1 haha
+      g2 666
+      g3 777
+      (Only treated as g1 floor)
+
+      User2:
+      g1 haha
+
+      User2:
+      g2 666
+      X
+
+      User1:
+      g1 haha
+
+      User2:
+      g1 haha
+
+      User1:
+      g3 666
+
+      User2
+      g3
+      X
+     
+
+##### Known bug
+
+Due to API limitations, Bot cannot check whether the GFloor built before startup satisfies Rule 5 and Rule 6.
+
+#### MusicPlayer
+
+   Available commands:
+
+   * `!play <url> <volume>`: play musics
+     * `play` can be replaced by the abbreviations `pl` or `p`.
+     * `url`: Music link
+     * `volume`: Volume setting,the default is 15.
+
+   * `!pause`: Pause/resume currently play music
+     * `pause` can be replaced by the abbreviation `pa`.
+
+   * `!skip`: skip current music
+     * `skip` can be replaced by the abbreviation `sk`.
+
+   * `!stop`: stop playing music
+     * `stop` can be replaced by the abbreviation `st`.
+
+   * `!volume <volume>`: adjust volume
+     * `volume` can be replaced by the abbreviation `v`.
+     * `volume`: volume
+
+   * `!volume`: Display the current volume level
+     * `volume` can be replaced by the abbreviation `v`.
+
+   * `!loop` : Turn loop playback on/off
+     * `loop` can be replaced by the abbreviation `lp`.
+
+   * `!list` : Display the current playlist
+     * `list` can be replaced by the abbreviation `ls`.
+
+   * `!shuffle` : Scramble the to-be-played list
+     * `shuffle` can be replaced by the abbreviation `sh`.
 
 ---
 
 ## Service register system
 
-1. 首先，請在 `Service.init()` 中，使用 `Service.loginService()` 登記，並使服務繼承 `Service` 類別
+1. First, in `Service.init()`, use `Service.loginService()` to register and make the service `extends` the `Service` class.
 
-2. 接下來，請在服務中覆寫 `registerByEnvironment()`、`copy()` 這兩個方法:
+2. Next, override the `registerByEnvironment()`, `copy()` methods in the service:
 
    * `copy()`
-   ```Java 
+   ```Java
    public abstract Service copy();
    ```
 
-   請回傳服務物件的複製參照
+   Please return a copy reference of the service object instance.
 
    * `registerByEnvironment()`
    ```Java
    public abstract void registerByEnvironment(JSONObject values, String name);
    ```
 
-   其中，`values` 為 `json` 物件，裡面直接存放物件的初始化設定值
+   Among them, `values` is a `json` object, which directly stores the initialization setting value of the object.
 
-   請自行依照傳入的 `json` 物件初始化服務
+   Please initialize the service according to the incoming `json` object.
 
-   `name` 為服務的名稱，如有需要，可以將其設為 `serviceName` 的值
+   `name` is the name of the service, it can be set to the value of `serviceName` if desired
 
-3. 接下來請為你的服務撰寫 `RegisterEnvironment.json`，請存放於執行時命令列參數 `--configpath <path>` 所設定的資料夾
+3. Next, please write `RegisterEnvironment.json` for your service:
 
-   並請依照以下格式撰寫:
-   
-   * `RegisterEnvironment.json`example:
-      ```json 
+   `RegisterEnvironment.json` records the `json` object passed in by `registerByEnvironment(JSONObject values, String name)` when each service is initialized.
+
+   Each `Service name` corresponds to an object instance, which is also the `json` object passed into `registerByEnvironment(JSONObject values, String name)`
+
+   Please save it in the folder set by the command line parameter `--configpath <path>` during execution, and please write in the following format:
+
+   * `RegisterEnvironment.json` example:
+      ```json
       {
-         "GFloor": { // Service class name
-            "成電服專用GG人1號": {// Service name
-               "CHANNEL_ID": 666, // Service value
-               "nowFloor": 0,     // Service value
-               "maxFloor": 0      // Service value
+         "GFloor": { // `Service class` name
+            "GFLoor_bot1": {// `Service name`, NO SAPCES!
+               "CHANNEL_ID": 666, // Service value, more information can get in the defualt `RegisterEnvironment.json`
+               "nowFloor": 0,
+               "maxFloor": 0
             },
-            "成電服專用GG人2號": {// Service name
+            "GFloor_bot2": {// `Service name`, NO SAPCES!
                "CHANNEL_ID": 777, // Service value
-               "nowFloor": 0,     // Service value
-               "maxFloor": 0      // Service value
+               "nowFloor": 0,
+               "maxFloor": 0
+            }
+         },
+         "MusicPlayer":{ // `Service class` name
+            "DJ":{// `Service name`, NO SAPCES!
+               "isInfoVisible":true
             }
          }
       }
       ```
 
-   * `Service class name` 請務必填寫有在 `Service.init()` 中登記的服務物件類別名稱
-   * 在同服務類別中，`Service name` 請務必為唯一名稱
-   * `Service value` 們會變成一個 `json` 物件和 `Service class name` 一同傳入 `registerByEnvironment()` 中
+   * `Service class name` please be sure to fill in the service object class name registered in `Service.init()`.
+   * In the same `Service class` for multiple services, `Service name` must be a unique name and NO SPACES!
+   * all the `Service value` will become a `json` object instance and passed to `registerByEnvironment()` along with the `Service name`.
