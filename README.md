@@ -1,6 +1,6 @@
 # Discord Bot - Java version
 
-## Video Demo:  <URL HERE>
+## Video Demo:  https://youtu.be/Mq5y7zLnBQI
 
 ## Description:
 
