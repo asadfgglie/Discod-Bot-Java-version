@@ -10,12 +10,14 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -33,16 +35,18 @@ public class Basic extends ListenerAdapter {
     private final static Logger logger = LoggerFactory.getLogger(Basic.class.getSimpleName());
 
     private final static ArrayList<Services> REGISTER_LIST = new ArrayList<>();
-    private final static ArrayList<User> ADMIN_USER_LIST = new ArrayList<>();
+    private final static ArrayList<UserSnowflake> ADMIN_USER_LIST = new ArrayList<>();
 
     /**
-     * All about the path of OS must use this path.
+     * All config path.
      */
-    public static String PATH;
+    public static String CONFIG_PATH;
+
+    public static String SCRIPT_PATH;
 
     public static JSONConfig REGISTER_CONFIG;
     public static JSONConfig BOT_CONFIG;
-    public static JSONConfig ADMIN_USER_CONFIG;
+    public static @Nullable JSONConfig ADMIN_USER_CONFIG;
 
     public static JDA BUILDER;
 
@@ -76,24 +80,24 @@ public class Basic extends ListenerAdapter {
         return Objects.requireNonNull(setConfig(configName, true));
     }
 
-    public static JSONConfig setConfig(String configName, boolean compulsory) throws IOException {
+    public static @Nullable JSONConfig setConfig(String configName, boolean compulsory) throws IOException {
         BufferedReader configReader;
 
         if(compulsory) {
             try {
-                configReader = new BufferedReader(new InputStreamReader(new FileInputStream(PATH + File.separator + configName)));
+                configReader = new BufferedReader(new InputStreamReader(new FileInputStream(CONFIG_PATH + File.separator + configName)));
                 logger.info("Success load \"" + configName + "\"");
             } catch (FileNotFoundException e) {
-                logger.error("Couldn't find \"" + configName + "\" in \"" + PATH, e);
-                throw new StartInitException("Couldn't find \"" + configName + "\" in \"" + PATH);
+                logger.error("Couldn't find \"" + configName + "\" in \"" + CONFIG_PATH, e);
+                throw new StartInitException("Couldn't find \"" + configName + "\" in \"" + CONFIG_PATH);
             }
         }
         else{
             try {
-                configReader = new BufferedReader(new InputStreamReader(new FileInputStream(PATH + File.separator + configName)));
+                configReader = new BufferedReader(new InputStreamReader(new FileInputStream(CONFIG_PATH + File.separator + configName)));
                 logger.info("Success load \"" + configName + "\"");
             } catch (FileNotFoundException e) {
-                logger.info("Couldn't find \"" + configName + "\" in \"" + PATH);
+                logger.info("Couldn't find \"" + configName + "\" in \"" + CONFIG_PATH);
                 logger.info("\"" + configName + "\" is an option to be a config.");
                 return null;
             }
@@ -109,7 +113,7 @@ public class Basic extends ListenerAdapter {
 
         configReader.close();
 
-        return new JSONConfig(PATH + File.separator + configName, configStr.toString());
+        return new JSONConfig(CONFIG_PATH + File.separator + configName, configStr.toString());
     }
 
     private static void registerServices(){
@@ -154,7 +158,7 @@ public class Basic extends ListenerAdapter {
         if(ADMIN_USER_CONFIG != null){
             for (Iterator<String> it = ADMIN_USER_CONFIG.keys(); it.hasNext(); ) {
                 String user = it.next();
-                ADMIN_USER_LIST.add(User.fromId(ADMIN_USER_CONFIG.getLong(user)));
+                ADMIN_USER_LIST.add(UserSnowflake.fromId(ADMIN_USER_CONFIG.getLong(user)));
             }
         }
     }
@@ -168,14 +172,16 @@ public class Basic extends ListenerAdapter {
             GatewayIntent.GUILD_MESSAGES,
             // We need voice states to connect to the voice channel
             GatewayIntent.GUILD_VOICE_STATES,
-            GatewayIntent.GUILD_EMOJIS
+            GatewayIntent.GUILD_EMOJIS_AND_STICKERS,
+            GatewayIntent.MESSAGE_CONTENT
         );
 
         try{
             BUILDER = JDABuilder.createDefault(token, intents)
                     .addEventListeners(new Basic())
-                    .setActivity(Activity.watching("無情抓違建"))
+                    .setActivity(Activity.of(Activity.ActivityType.valueOf(BOT_CONFIG.getString("Activity_type")), BOT_CONFIG.getString("Activity")))
                     .enableCache(CacheFlag.VOICE_STATE)
+                    .disableCache(CacheFlag.SCHEDULED_EVENTS)
                     .build();
 
             for(Services s: REGISTER_LIST) {
@@ -222,10 +228,11 @@ public class Basic extends ListenerAdapter {
         }
 
         if (cmdData.cmdHeadEqual("info")) {
+            assert cmdData.cmd != null;
             info(cmdData.cmd, event);
         }
 
-        if(!cmdData.isTargetSelf()){
+        if(cmdData.isTargetSelf()){
             return;
         }
         else if(cmdData.cmdHeadEqual("stopBot")){
@@ -243,9 +250,11 @@ public class Basic extends ListenerAdapter {
             op(event, cmdData);
         }
     }
+
     private void op(MessageReceivedEvent event, CommandData cmdData){
         String newAdminID;
         try {
+            assert cmdData.cmd != null;
             newAdminID = CommandData.getUserID(cmdData.cmd[1]);
         }
         catch (StringIndexOutOfBoundsException e){
@@ -268,6 +277,7 @@ public class Basic extends ListenerAdapter {
             ADMIN_USER_LIST.add(newAdmin);
         }
 
+        assert ADMIN_USER_CONFIG != null;
         ADMIN_USER_CONFIG.put(newAdmin.getName(), newAdmin.getIdLong());
         saveConfig(ADMIN_USER_CONFIG);
     }
@@ -297,7 +307,7 @@ public class Basic extends ListenerAdapter {
             String json;
             if(jsonObject.getBoolean("isInfoVisible")) {
                 jsonObject.remove("isInfoVisible");
-                json = JSONConfig.toFormatString(jsonObject.toString());
+                json = jsonObject.toString(1);
             }
             else{
                 try {
