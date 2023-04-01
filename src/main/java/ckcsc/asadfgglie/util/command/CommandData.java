@@ -4,17 +4,20 @@ import ckcsc.asadfgglie.main.Basic;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+// TODO: 新班DC API搞炸了我的ID獲取系統
 public class CommandData {
+    @Nullable
     public String[] cmd;
     public boolean isCmd;
     public User target = null;
 
-    public CommandData(boolean isCommand, String[] command){
+    private CommandData(boolean isCommand, @Nullable String[] command){
         this.cmd = command;
         this.isCmd = isCommand;
 
-        if(isCmd) {
+        if(isCmd && cmd != null) {
             try {
                 String targetStr = CommandData.getUserID(cmd[cmd.length - 1]);
 
@@ -24,6 +27,9 @@ public class CommandData {
             }
             catch (Exception ignore){}
         }
+        else if(isCmd){
+            this.isCmd = false;
+        }
     }
 
     public static String getUserID(String contentRaw){
@@ -31,7 +37,7 @@ public class CommandData {
     }
 
     public boolean isTargetSelf(){
-        return hasTarget() && target.getId().equals(Basic.BUILDER.getSelfUser().getId());
+        return !hasTarget() || !target.getId().equals(Basic.BUILDER.getSelfUser().getId());
     }
 
     public boolean hasTarget(){
