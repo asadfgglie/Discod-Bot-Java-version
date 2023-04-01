@@ -32,7 +32,9 @@ def connect():
 
 @socketio.on('generate')
 def reply_text(data):
-    user_inputs: BatchEncoding = tokenizer(tokenizer.sep_token.join(data['text']), return_tensors='pt', truncation=True,
+    user_inputs: BatchEncoding = tokenizer(tokenizer.sep_token.join(data['text'][-20:]),
+                                           return_tensors='pt',
+                                           truncation=True,
                                            max_length=1024 - config.max_new_tokens)
 
     # generated a response while limiting the total chat history to 1000 tokens,
@@ -41,7 +43,8 @@ def reply_text(data):
     reply = ''.join(tokenizer.decode(chat_history_ids[:, user_inputs['input_ids'].shape[-1]:][0],
                                      skip_special_tokens=True).split())
     print(reply)
-    socketio.emit('reply', reply)
+    data['reply'] = reply
+    socketio.emit('reply', data)
 
 
 if __name__ == '__main__':

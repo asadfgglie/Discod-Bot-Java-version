@@ -160,10 +160,13 @@ public class AutoReply extends Services{
             AtomicBoolean has_reply = new AtomicBoolean(false);
             socket.emit("generate", json).on("reply", args -> {
                 if (!has_reply.get()) {
-                    String reply = String.valueOf(args[0]);
-                    event.getChannel().sendMessage(reply).queue();
-                    has_reply.set(true);
-                    chat_history.add(reply);
+                    JSONObject data = new JSONObject(String.valueOf(args[0]));
+                    if (data.getString("CHANNEL_ID").equals(event.getChannel().getId())) {
+                        String reply = data.getString("reply");
+                        event.getChannel().sendMessage(reply).queue();
+                        has_reply.set(true);
+                        chat_history.add(reply);
+                    }
                 }
             });
         }
