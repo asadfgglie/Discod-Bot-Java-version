@@ -2,7 +2,7 @@ package ckcsc.asadfgglie.main.services.handler.music;
 
 import ckcsc.asadfgglie.main.services.MusicPlayer;
 import ckcsc.asadfgglie.util.Time;
-import net.dv8tion.jda.api.entities.AudioChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 
 public class LeaveHandler extends Thread {
     private final AudioChannel audioChannel;

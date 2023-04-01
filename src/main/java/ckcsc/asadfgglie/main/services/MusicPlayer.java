@@ -1,42 +1,50 @@
 package ckcsc.asadfgglie.main.services;
 
-import ckcsc.asadfgglie.util.command.CommandData;
 import ckcsc.asadfgglie.main.services.Register.Services;
 import ckcsc.asadfgglie.main.services.handler.music.Handler;
 import ckcsc.asadfgglie.main.services.handler.music.LeaveHandler;
 import ckcsc.asadfgglie.main.services.handler.music.LoadResultHandler;
 import ckcsc.asadfgglie.main.services.handler.music.MapData;
+import ckcsc.asadfgglie.util.command.CommandData;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayer;
 import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.player.DefaultAudioPlayerManager;
 import com.sedmelluq.discord.lavaplayer.source.AudioSourceManagers;
-import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.MessageChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.managers.AudioManager;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class MusicPlayer extends Services {
     public volatile MapData mapData = new MapData();
     private AudioPlayerManager audioPlayerManager;
 
-//    private String localMusicPATH;
+    private final ArrayList<String> COMMAND_LIST = new ArrayList<>();
+
+    private void addCommandSet(String... commandSet){
+        COMMAND_LIST.addAll(List.of(commandSet));
+    }
 
     public MusicPlayer(){}
 
     @Override
     public void registerByEnvironment (JSONObject values) {
-//        try{
-//            localMusicPATH = values.getString("localMusicPATH");
-//        }
-//        catch (JSONException e){
-//            logger.warn("\"localMusicPATH\" is an option to set.");
-//            logger.warn("Because didn't set the \"localMusicPATH\", MusicPlayer can't play local music.");
-//        }
+        addCommandSet("play", "pl", "p");
+        addCommandSet("pause", "pa");
+        addCommandSet("skip", "sk");
+        addCommandSet("volume", "v");
+        addCommandSet("stop", "st");
+        addCommandSet("list", "ls");
+        addCommandSet("loop", "lp");
+        addCommandSet("shuffle", "sh");
+
         audioPlayerManager = new DefaultAudioPlayerManager();
 
         AudioSourceManagers.registerLocalSource(audioPlayerManager);
@@ -60,7 +68,7 @@ public class MusicPlayer extends Services {
         if(!cmdData.isCmd ||
            event.getAuthor().isBot() ||
            !event.isFromGuild() ||
-           (cmdData.hasTarget() && !cmdData.isTargetSelf())){
+           (cmdData.hasTarget() && cmdData.isTargetSelf())){
             return;
         }
 
@@ -70,7 +78,7 @@ public class MusicPlayer extends Services {
             return;
         }
 
-        if(checkCantUseCmd(event)){
+        if(checkCantUseCmd(event, cmdData)){
             return;
         }
 
@@ -83,6 +91,7 @@ public class MusicPlayer extends Services {
             skipMusic(event.getGuild());
         }
         else if(cmdData.cmdHeadEqual("volume", "v")){
+            assert cmdData.cmd != null;
             if(cmdData.cmd.length == 1){
                 printMsg(event);
                 showVolume(event.getGuild());
@@ -119,6 +128,7 @@ public class MusicPlayer extends Services {
 
     private void setVolume(CommandData commandData, Guild guild) {
         try {
+            assert commandData.cmd != null;
             mapData.getHandler(guild).getAudioPlayer().setVolume(Integer.parseInt(commandData.cmd[1]));
             showVolume(guild);
         }
@@ -133,7 +143,12 @@ public class MusicPlayer extends Services {
      * <br>
      * If <b>can't</b>, return ture, else return false.
      */
-    private boolean checkCantUseCmd(@NotNull MessageReceivedEvent event) {
+    private boolean checkCantUseCmd(@NotNull MessageReceivedEvent event, CommandData cmd) {
+        assert cmd.cmd != null;
+        if (!COMMAND_LIST.contains(cmd.cmd[0])){
+            return true;
+        }
+
         AudioChannel audioChannel = mapData.getAudioChannel(event.getGuild());
         Handler handler = mapData.getHandler(event.getGuild());
 
