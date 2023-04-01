@@ -1,14 +1,17 @@
 package ckcsc.asadfgglie.main.services.ai;
 
 import ckcsc.asadfgglie.main.Basic;
-import ckcsc.asadfgglie.main.services.AbstractAI;
 import ckcsc.asadfgglie.main.services.Register.Services;
 import ckcsc.asadfgglie.util.Array;
 import ckcsc.asadfgglie.util.Path;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.tensorflow.SavedModelBundle;
 import org.tensorflow.Tensor;
+import org.tensorflow.TensorFlowException;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,8 +20,78 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-public class MNIST extends AbstractAI {
+public class MNIST extends Services {
+    private SavedModelBundle modelBundle;
+
+    private String modelPath;
+
+    private String inputName;
+    private String outputName;
+
+    private int inputXSize;
+    private int inputYSize;
+
+    private long CHANNEL_ID;
+
     public MNIST(){}
+
+    @Override
+    public void registerByEnvironment(JSONObject values) {
+        boolean loadSuccess = true;
+
+        try{
+            this.CHANNEL_ID = values.getLong("CHANNEL_ID");
+        }
+        catch (JSONException e){
+            logger.error("You need to set the \"CHANNEL_ID\" to let MNIST know where to work!", e);
+        }
+        try{
+            inputName = values.getString("inputName");
+            outputName = values.getString("outputName");
+        }
+        catch (JSONException e){
+            logger.error("You need to set the \"inputName\" and the \"outputName\" to let MNIST know how to use this model!");
+            logger.error("If you want check the model I/O method name, use \"saved_model_cli\" to get more information.", e);
+            loadSuccess = false;
+        }
+        try{
+            inputXSize = values.getInt("inputXSize");
+            inputYSize = values.getInt("inputYSize");
+        }
+        catch (JSONException e){
+            logger.error("You need to set the \"inputXSize\" and the \"inputYSize\" to let MNIST know how to use this model!");
+            logger.error("If you want check the model I/O method name, use \"saved_model_cli\" to get more information.", e);
+            loadSuccess = false;
+        }
+        try{
+            modelPath = values.getString("modelPath");
+            String setTags = values.getString("modelTags");
+            modelBundle = SavedModelBundle.load(modelPath, setTags);
+        }
+        catch (JSONException e){
+            logger.error("You need to set the \"modelPath\" and the \"modelTags\" to let MNIST know work with which model!");
+            logger.error("If you want check the model setTags, use \"saved_model_cli\" to get more information.", e);
+            loadSuccess = false;
+        }
+        catch (TensorFlowException e){
+            logger.error("Load model from " + modelPath + " failed.", e);
+            loadSuccess = false;
+        }
+
+        if(loadSuccess) {
+            logger.info("Load model from " + modelPath + " success.");
+
+            getSelfConfig().put("LoadState", true);
+
+            Basic.saveConfig(Basic.REGISTER_CONFIG);
+        }
+        else {
+            getSelfConfig().put("LoadState", false);
+
+            Basic.saveConfig(Basic.REGISTER_CONFIG);
+            Basic.removeService(this);
+        }
+    }
 
     @Override
     public Services copy() {
@@ -33,7 +106,7 @@ public class MNIST extends AbstractAI {
 
         for(Message.Attachment attachment : event.getMessage().getAttachments()){
             if(attachment.isImage()){
-                String path = Path.transferPath(Basic.PATH + "\\tmp\\");
+                String path = Path.transferPath(Basic.CONFIG_PATH + "\\tmp\\");
 
                 File tmp = new File(path);
                 if(!tmp.exists() && !tmp.isDirectory()){
@@ -41,7 +114,7 @@ public class MNIST extends AbstractAI {
                     tmp.mkdir();
                 }
 
-                attachment.downloadToFile(path + attachment.getFileName()).thenAccept(file -> {
+                attachment.getProxy().downloadToFile(new File(path + attachment.getFileName())).thenAccept(file -> {
                     logger.info("Get the image on " + attachment.getUrl());
                     logger.info("Save the image on " + file.getAbsolutePath());
                     int prediction;
