@@ -25,6 +25,9 @@ public abstract class Services extends ListenerAdapter {
 
     public static HashMap<String, ServiceArray> SERVICES_LIST = new HashMap<>();
 
+    /**
+     * Initialize registered service.
+     */
     public static void init() {
         loginService(GFloor.class.getSimpleName(), new GFloor());
         loginService(MusicPlayer.class.getSimpleName(), new MusicPlayer());
@@ -90,6 +93,10 @@ public abstract class Services extends ListenerAdapter {
         setDescription(values);
     }
 
+    /**
+     * Print an MessageEvent's msg.
+     * @param e the MessageEvent
+     */
     protected void printMsg(@NotNull GenericMessageEvent e){
         if(e instanceof MessageReceivedEvent) {
             MessageReceivedEvent event = (MessageReceivedEvent) e;
