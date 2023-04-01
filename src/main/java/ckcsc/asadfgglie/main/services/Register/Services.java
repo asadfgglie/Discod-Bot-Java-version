@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -57,7 +58,7 @@ public abstract class Services extends ListenerAdapter {
 
     public abstract Services copy();
 
-    public void printlnInfo(String msg){
+    public void printlnInfo(@Nullable String msg){
         if (msg != null) {
             for(String str : msg.split("\n")) {
                 logger.info(str);
