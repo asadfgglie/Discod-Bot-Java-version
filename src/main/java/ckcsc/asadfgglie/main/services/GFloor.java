@@ -2,12 +2,13 @@ package ckcsc.asadfgglie.main.services;
 
 import ckcsc.asadfgglie.main.Basic;
 import ckcsc.asadfgglie.main.services.Register.Services;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.MessageType;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.GenericMessageEvent;
 import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
-import net.dv8tion.jda.internal.utils.tuple.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
@@ -229,7 +230,8 @@ public class GFloor extends Services {
 
     @Override
     public String toString(){
-        return GFloor.class.getSimpleName() + "(serviceName: " + this.serviceName + ", CHANNEL_ID: " + this.CHANNEL_ID + ", nowFloor: " + this.nowFloor + ", maxFloor: " + this.maxFloor + ", lastFloorBuilder" + this.lastFloorBuilderID + ")";
+        return GFloor.class.getSimpleName() + "(serviceName: " + this.serviceName + ", CHANNEL_ID: " + this.CHANNEL_ID
+                + ", nowFloor: " + this.nowFloor + ", maxFloor: " + this.maxFloor + ", lastFloorBuilder" + this.lastFloorBuilderID + ")";
     }
 
 }
