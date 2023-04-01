@@ -189,7 +189,7 @@ Due to API limitations, Bot cannot check whether the GFloor built before startup
 
    * `registerByEnvironment()`
    ```Java
-   public abstract void registerByEnvironment(JSONObject values, String name);
+   public abstract void registerByEnvironment(JSONObject values);
    ```
 
    Among them, `values` is a `json` object, which directly stores the initialization setting value of the object.
