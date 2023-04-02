@@ -68,7 +68,7 @@ public class MusicPlayer extends Services {
         if(!cmdData.isCmd ||
            event.getAuthor().isBot() ||
            !event.isFromGuild() ||
-           (cmdData.hasTarget() && cmdData.isTargetSelf())){
+           cmdData.isTargetSelf()){
             return;
         }
 
