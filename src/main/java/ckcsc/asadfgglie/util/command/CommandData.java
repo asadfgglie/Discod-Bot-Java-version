@@ -46,6 +46,7 @@ public class CommandData {
 
     public boolean cmdHeadEqual(CharSequence... str){
         for(CharSequence sequence :str){
+            assert cmd != null;
             if(cmd[0].contentEquals(sequence)){
                 return true;
             }

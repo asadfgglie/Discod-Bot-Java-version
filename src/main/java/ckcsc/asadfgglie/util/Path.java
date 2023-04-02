@@ -31,7 +31,7 @@ public class Path {
         if(filePath.lastIndexOf("/") != -1) {
             filePath = filePath.substring(0, filePath.lastIndexOf("/"));
         }
-        return filePath;
+        return Path.transferPath(filePath);
     }
 
     public static String transferPath(String path){
