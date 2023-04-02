@@ -7,6 +7,7 @@ import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Do not use IDEA to terminate the bot, or the flask process can't close correctly.
  */
 public class AutoReply extends Services{
-    private long CHANNEL_ID;
+    protected long CHANNEL_ID;
 
     /**
      * Language model use flask to call python interface.
@@ -38,15 +39,20 @@ public class AutoReply extends Services{
 
     private final AtomicBoolean flask_console_output = new AtomicBoolean(false);
 
-    private Socket socket;
+    protected Socket socket;
 
     @Override
     public void registerByEnvironment (@NotNull JSONObject values) {
         try {
-            this.CHANNEL_ID = values.getLong("CHANNEL_ID");
+            if (!values.isNull("CHANNEL_ID")) {
+                this.CHANNEL_ID = values.getLong("CHANNEL_ID");
+            }
+            else {
+                this.CHANNEL_ID = -1;
+            }
         }
         catch (JSONException e) {
-            logger.error("Need \"CHANNEL_ID\" to register service.", e);
+            logger.error("Need \"CHANNEL_ID\" to register service. If null or -1, it will be private channel mode.", e);
         }
 
         try {
@@ -139,8 +145,13 @@ public class AutoReply extends Services{
 
     @Override
     public void onMessageReceived (@NotNull MessageReceivedEvent event) {
-        if(event.getChannel().getIdLong() == CHANNEL_ID) {
+        if(event.getChannel().getIdLong() == CHANNEL_ID || (!event.isFromGuild() && CHANNEL_ID == -1)) {
             if(CommandData.getCmdData(event).isCmd){
+                CommandData cmd = CommandData.getCmdData(event);
+                if(cmd.cmdHeadEqual("clear")){
+                    chat_history.clear();
+                    event.getChannel().sendMessage("Clear chat history.").queue();
+                }
                 return;
             }
 
@@ -155,17 +166,18 @@ public class AutoReply extends Services{
             String[] tmp = new String[chat_history.size()];
             chat_history.toArray(tmp);
             json.put("text", tmp);
-            json.put("CHANNEL_ID", event.getChannel().getId());
+            json.put("CHANNEL_ID", event.getChannel().getIdLong());
+            json.put("return_num_seq", 1);
 
             AtomicBoolean has_reply = new AtomicBoolean(false);
             socket.emit("generate", json).on("reply", args -> {
                 if (!has_reply.get()) {
                     JSONObject data = new JSONObject(String.valueOf(args[0]));
-                    if (data.getString("CHANNEL_ID").equals(event.getChannel().getId())) {
-                        String reply = data.getString("reply");
-                        event.getChannel().sendMessage(reply).queue();
+                    if (data.getLong("CHANNEL_ID") == event.getChannel().getIdLong()) {
+                        JSONArray reply = data.getJSONArray("reply");
+                        event.getChannel().sendMessage(reply.getString(0)).queue();
                         has_reply.set(true);
-                        chat_history.add(reply);
+                        chat_history.add((String) reply.get(0));
                     }
                 }
             });

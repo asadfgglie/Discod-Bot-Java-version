@@ -38,11 +38,12 @@ def reply_text(data):
                                            max_length=1024 - config.max_new_tokens)
 
     # generated a response while limiting the total chat history to 1000 tokens,
-    chat_history_ids = model.generate(generation_config=config, **user_inputs)
+    chat_history_ids = model.generate(generation_config=config, num_return_sequences=data['return_num_seq'],
+                                      **user_inputs)
 
-    reply = ''.join(tokenizer.decode(chat_history_ids[:, user_inputs['input_ids'].shape[-1]:][0],
-                                     skip_special_tokens=True).split())
-    print(reply)
+    reply = [''.join(tokenizer.decode(chat_history_ids[i][user_inputs['input_ids'].shape[-1]:],
+                                      skip_special_tokens=True).split()) for i in range(data['return_num_seq'])]
+    # print(data['text'], reply)
     data['reply'] = reply
     socketio.emit('reply', data)
 
