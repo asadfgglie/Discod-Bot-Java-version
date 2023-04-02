@@ -3,6 +3,7 @@ package ckcsc.asadfgglie.main.services.Register;
 import ckcsc.asadfgglie.main.Basic;
 import ckcsc.asadfgglie.main.services.GFloor;
 import ckcsc.asadfgglie.main.services.ai.AutoReply;
+import ckcsc.asadfgglie.main.services.ai.HumanFeedback;
 import ckcsc.asadfgglie.main.services.ai.MNIST;
 import ckcsc.asadfgglie.main.services.MusicPlayer;
 import net.dv8tion.jda.api.events.message.GenericMessageEvent;
@@ -34,6 +35,7 @@ public abstract class Services extends ListenerAdapter {
         loginService(MusicPlayer.class.getSimpleName(), new MusicPlayer());
         loginService(MNIST.class.getSimpleName(), new MNIST());
         loginService(AutoReply.class.getSimpleName(), new AutoReply());
+        loginService(HumanFeedback.class.getSimpleName(), new HumanFeedback());
     }
 
     private static void loginService(String className, Services service){
@@ -102,10 +104,10 @@ public abstract class Services extends ListenerAdapter {
         if(e instanceof MessageReceivedEvent) {
             MessageReceivedEvent event = (MessageReceivedEvent) e;
             if (event.isFromGuild()) {
-                logger.info("<<" + event.getGuild().getName() + ">>" + " #<" + event.getChannel().getName() + "> " + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
+                logger.info("<<" + event.getGuild().getName() + ">> " + " #<" + event.getChannel().getName() + "> " + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
             }
             else {
-                logger.info("<<" + event.getChannel().getName() + ">>" + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
+                logger.info("<<" + event.getChannel().getName() + ">> " + event.getAuthor().getName() + ": " + event.getMessage().getContentDisplay());
             }
         }
         else if(e instanceof MessageUpdateEvent){
