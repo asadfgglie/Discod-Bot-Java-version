@@ -1,21 +1,18 @@
 package ckcsc.asadfgglie.main;
 
+import ckcsc.asadfgglie.main.services.Register.ServiceArray;
+import ckcsc.asadfgglie.main.services.Register.Services;
 import ckcsc.asadfgglie.util.Exception.StartInitException;
 import ckcsc.asadfgglie.util.command.CommandData;
 import ckcsc.asadfgglie.util.json.JSONConfig;
-import ckcsc.asadfgglie.main.services.Register.ServiceArray;
-import ckcsc.asadfgglie.main.services.Register.Services;
-
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.UserSnowflake;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.json.JSONException;
@@ -35,7 +32,7 @@ public class Basic extends ListenerAdapter {
     private final static Logger logger = LoggerFactory.getLogger(Basic.class.getSimpleName());
 
     private final static ArrayList<Services> REGISTER_LIST = new ArrayList<>();
-    private final static ArrayList<UserSnowflake> ADMIN_USER_LIST = new ArrayList<>();
+    public final static ArrayList<Long> ADMIN_USER_LIST = new ArrayList<>();
 
     /**
      * All config path.
@@ -158,7 +155,7 @@ public class Basic extends ListenerAdapter {
         if(ADMIN_USER_CONFIG != null){
             for (Iterator<String> it = ADMIN_USER_CONFIG.keys(); it.hasNext(); ) {
                 String user = it.next();
-                ADMIN_USER_LIST.add(UserSnowflake.fromId(ADMIN_USER_CONFIG.getLong(user)));
+                ADMIN_USER_LIST.add(ADMIN_USER_CONFIG.getLong(user));
             }
         }
     }
@@ -173,7 +170,10 @@ public class Basic extends ListenerAdapter {
             // We need voice states to connect to the voice channel
             GatewayIntent.GUILD_VOICE_STATES,
             GatewayIntent.GUILD_EMOJIS_AND_STICKERS,
-            GatewayIntent.MESSAGE_CONTENT
+            GatewayIntent.MESSAGE_CONTENT,
+            GatewayIntent.DIRECT_MESSAGES,
+            GatewayIntent.GUILD_MEMBERS,
+            GatewayIntent.GUILD_MESSAGE_REACTIONS
         );
 
         try{
@@ -201,7 +201,7 @@ public class Basic extends ListenerAdapter {
             configWriter = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(config.fullConfigName)));
         }
         catch (FileNotFoundException e){
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
             return;
         }
 
@@ -214,7 +214,7 @@ public class Basic extends ListenerAdapter {
             configWriter.close();
         }
         catch (IOException e){
-            e.printStackTrace();
+            logger.error(e.getMessage(), e);
         }
     }
 
@@ -223,7 +223,13 @@ public class Basic extends ListenerAdapter {
         CommandData cmdData = CommandData.getCmdData(event);
         User author = event.getAuthor();
 
-        if(!cmdData.isCmd || !event.isFromGuild() || event.getAuthor().isBot()){
+        if(author.isBot()){
+            return;
+        }
+        if(!cmdData.isCmd){
+            return;
+        }
+        if(!event.isFromGuild() && !ADMIN_USER_LIST.contains(author.getIdLong())){
             return;
         }
 
@@ -236,14 +242,14 @@ public class Basic extends ListenerAdapter {
             return;
         }
         else if(cmdData.cmdHeadEqual("stopBot")){
-            if(!ADMIN_USER_LIST.contains(author)) {
+            if(!ADMIN_USER_LIST.contains(author.getIdLong())) {
                 event.getChannel().sendMessage("Sorry, you are not the admin.").queue();
                 return;
             }
             stopBot();
         }
         else if(cmdData.cmdHeadEqual("op")){
-            if(!ADMIN_USER_LIST.contains(author)) {
+            if(!ADMIN_USER_LIST.contains(author.getIdLong())) {
                 event.getChannel().sendMessage("Sorry, you are not the admin.").queue();
                 return;
             }
@@ -273,8 +279,8 @@ public class Basic extends ListenerAdapter {
     }
 
     private static void addAdmin (User newAdmin) {
-        if(!ADMIN_USER_LIST.contains(newAdmin)) {
-            ADMIN_USER_LIST.add(newAdmin);
+        if(!ADMIN_USER_LIST.contains(newAdmin.getIdLong())) {
+            ADMIN_USER_LIST.add(newAdmin.getIdLong());
         }
 
         assert ADMIN_USER_CONFIG != null;
@@ -325,13 +331,18 @@ public class Basic extends ListenerAdapter {
         }
     }
 
-    private void stopBot () {
+    private synchronized void stopBot () {
         logger.info("======================");
         logger.info("");
         logger.info("\tShut down.");
         logger.info("");
         logger.info("======================");
         BUILDER.shutdown();
+
+        try {
+            wait(5000);
+        }
+        catch (InterruptedException ignore) {}
         System.exit(0);
     }
 
