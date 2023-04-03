@@ -14,7 +14,6 @@ import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
-import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -82,28 +81,28 @@ public class HumanFeedback extends AutoReply {
                 "你的對話紀錄將不會被採用").queue();
 
         logger.info("Ready.");
-    }
 
-    @Override
-    public void onShutdown (@NotNull ShutdownEvent useless) {
-        for (long userId: UserChatData.keySet()) {
-            UserData data = UserChatData.get(userId);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            for (long userId: UserChatData.keySet()) {
+                UserData data = UserChatData.get(userId);
 
-            saveData(data, userId, false);
+                saveData(data, userId, false);
 
-            try {
-                data.writer.close();
+                try {
+                    data.writer.close();
+                }
+                catch (IOException e) {
+                    logger.error("Can't save data in " + Path.getPath() + File.separator + "data" + File.separator + userId, e);
+                }
             }
-            catch (IOException e) {
-                logger.error("Can't save data in " + Path.getPath() + File.separator + "data" + File.separator + userId, e);
-            }
-        }
+        }));
     }
 
     private void saveData (UserData data, long userId, boolean clear){
         try {
             data.writer.write( "dialog: " + new JSONArray(data.chatHistory.toArray()) + ", clear: " + clear);
             data.writer.newLine();
+            data.writer.flush();
         }
         catch (IOException e) {
             logger.error("Can't save chat data in " + Path.getPath() + File.separator + "data" + File.separator + userId, e);
@@ -132,7 +131,8 @@ public class HumanFeedback extends AutoReply {
                             channel.sendMessage(event.getAuthor().getAsMention() + " 現在你可以跟我說話了！\n" +
                                     "發表消息後，您可以使用 ✅ 選擇您認為最好的消息。\n" +
                                     "你可以用 `!clear` 清除我的聊天記錄，你也可以用 `!say 範例` 教我該怎麼說。\n" +
-                                    "你也可以使用 `!re` 讓我重新生成新的回复。").queue(message -> message.pin().queue());
+                                    "你也可以使用 `!re` 讓我重新生成新的回复。\n" +
+                                    "也請不要快速洗版，不然可能會有未知的bug").queue(message -> message.pin().queue());
 
 
 
@@ -164,68 +164,43 @@ public class HumanFeedback extends AutoReply {
                     UserChatData.get(event.getAuthor().getIdLong()).chatThread.getIdLong() == event.getChannel().getIdLong()) ||
                     Basic.ADMIN_USER_LIST.contains(event.getAuthor().getIdLong())){
                 if(cmd.cmdHeadEqual("clear", "cls")){
-                    if(Basic.ADMIN_USER_LIST.contains(event.getAuthor().getIdLong())){
-                        event.getMessage().delete().queue();
-                        event.getChannel().sendMessage("做出你的選擇在跟我說下一句話，我腦子比較小，還搞不清楚太複雜的對話方式").queue();
-                        return;
+                    if(UserChatData.containsKey(event.getAuthor().getIdLong()) && UserChatData.get(event.getAuthor().getIdLong()).chatThread.getIdLong() == event.getChannel().getIdLong()) {
+                        UserData data = UserChatData.get(event.getAuthor().getIdLong());
+
+                        saveData(data, event.getAuthor().getIdLong(), true);
+
+                        data.chatHistory.clear();
+                        event.getChannel().sendMessage("Clear chat history.").queue();
+                        clearMessageTmp(event.getAuthor().getIdLong());
                     }
-                    if(!UserChatData.get(event.getAuthor().getIdLong()).messageTmp.isEmpty()){
-                        event.getMessage().delete().queue();
-                        event.getChannel().sendMessage("做出你的選擇在跟我說下一句話，我腦子比較小，還搞不清楚太複雜的對話方式").queue();
-                        return;
-                    }
-
-                    UserData data = UserChatData.get(event.getAuthor().getIdLong());
-
-                    saveData(data, event.getAuthor().getIdLong(), true);
-
-                    data.chatHistory.clear();
-                    event.getChannel().sendMessage("Clear chat history.").queue();
-                    clearMessageTmp(event.getAuthor().getIdLong());
                 }
 
                 if(cmd.cmdHeadEqual("teach", "say")){
-                    if(Basic.ADMIN_USER_LIST.contains(event.getAuthor().getIdLong())){
+                    if(UserChatData.containsKey(event.getAuthor().getIdLong()) && UserChatData.get(event.getAuthor().getIdLong()).chatThread.getIdLong() == event.getChannel().getIdLong()) {
+
+                        assert cmd.cmd != null;
+                        StringBuilder tmp = new StringBuilder();
+
+                        for (int i = 0; i < cmd.cmd.length; i++) {
+                            if (i == 0)
+                                continue;
+                            tmp.append(cmd.cmd[i]);
+                        }
+
+                        UserChatData.get(event.getAuthor().getIdLong()).chatHistory.add(List.of("BOT", tmp.toString()));
+                        event.getChannel().sendMessage("OK, 我學到了: " + tmp).queue();
+                        clearMessageTmp(event.getAuthor().getIdLong());
+
                         event.getMessage().delete().queue();
-                        event.getChannel().sendMessage("管理員，我在等使用者跟我說一句話，我還不知道他要跟我聊什麼").queue();
-                        return;
                     }
-                    if(UserChatData.get(event.getAuthor().getIdLong()).messageTmp.isEmpty()){
-                        event.getMessage().delete().queue();
-                        event.getChannel().sendMessage("跟我說一句話，我還不知道你要跟我聊什麼").queue();
-                        return;
-                    }
-
-                    assert cmd.cmd != null;
-                    StringBuilder tmp = new StringBuilder();
-
-                    for(int i = 0; i < cmd.cmd.length; i++){
-                        if(i == 0) continue;
-                        tmp.append(cmd.cmd[i]);
-                    }
-
-                    UserChatData.get(event.getAuthor().getIdLong()).chatHistory.add(tmp.toString());
-                    event.getChannel().sendMessage("OK, 我學到了: " + tmp).queue();
-                    clearMessageTmp(event.getAuthor().getIdLong());
-
-                    event.getMessage().delete().queue();
                 }
 
                 if(cmd.cmdHeadEqual("re", "re-reply")){
-                    if(Basic.ADMIN_USER_LIST.contains(event.getAuthor().getIdLong())){
-                        event.getMessage().delete().queue();
-                        event.getChannel().sendMessage("管理員，我在等使用者跟我說一句話，我還不知道他要跟我聊什麼").queue();
-                        return;
-                    }
-                    if(UserChatData.get(event.getAuthor().getIdLong()).messageTmp.isEmpty()){
-                        event.getMessage().delete().queue();
-                        event.getChannel().sendMessage("跟我說一句話，我還不知道你要跟我聊什麼").queue();
-                        return;
-                    }
+                    if(UserChatData.containsKey(event.getAuthor().getIdLong()) && UserChatData.get(event.getAuthor().getIdLong()).chatThread.getIdLong() == event.getChannel().getIdLong()) {
+                        sendReply(event.getAuthor(), event.getChannel());
 
-                    sendReply(event.getAuthor(), event.getChannel());
-
-                    event.getMessage().delete().queue();
+                        event.getMessage().delete().queue();
+                    }
                 }
             }
             return;
@@ -278,7 +253,7 @@ public class HumanFeedback extends AutoReply {
                         if(i == 0) continue;
                         tmp.append(arrayTmp[i]);
                     }
-                    UserChatData.get(event.getUserIdLong()).chatHistory.add(tmp.toString());
+                    UserChatData.get(event.getUserIdLong()).chatHistory.add(List.of("BOT", tmp.toString()));
                     clearMessageTmp(event.getUserIdLong());
                     event.getChannel().sendMessage(tmp).queue();
                 }
@@ -294,11 +269,13 @@ public class HumanFeedback extends AutoReply {
     }
 
     private void sendReply (@NotNull User user, @NotNull MessageChannelUnion channel){
-        ArrayList<String> chat_history = UserChatData.get(user.getIdLong()).chatHistory;
+        List<List<String>> chat_history = UserChatData.get(user.getIdLong()).chatHistory;
 
         JSONObject json = new JSONObject();
         String[] tmp = new String[chat_history.size()];
-        chat_history.toArray(tmp);
+        for(int i = 0; i < tmp.length; i++){
+            tmp[i] = chat_history.get(i).get(1);
+        }
         json.put("text", tmp);
         json.put("CHANNEL_ID", channel.getIdLong());
         json.put("return_num_seq", return_num_seq);
@@ -326,7 +303,7 @@ public class HumanFeedback extends AutoReply {
     }
 
     private void sendReply(@NotNull MessageReceivedEvent event){
-        UserChatData.get(event.getAuthor().getIdLong()).chatHistory.add(event.getMessage().getContentDisplay());
+        UserChatData.get(event.getAuthor().getIdLong()).chatHistory.add(List.of("USER", event.getMessage().getContentDisplay()));
 
         sendReply(event.getAuthor(), event.getChannel());
     }
@@ -357,7 +334,7 @@ class UserData{
     /**
      * Store all user's ChatHistory
      */
-    public final ArrayList<String> chatHistory;
+    public final List<List<String>> chatHistory;
     /**
      * Store all user's ChatThread
      */
@@ -371,7 +348,7 @@ class UserData{
      */
     public final BufferedWriter writer;
 
-    public UserData (ArrayList<String> chatHistory, TextChannel chatThread, ArrayList<Message> messageTmp, BufferedWriter writer) {
+    public UserData (List<List<String>> chatHistory, TextChannel chatThread, ArrayList<Message> messageTmp, BufferedWriter writer) {
         this.chatHistory = chatHistory;
         this.chatThread = chatThread;
         this.messageTmp = messageTmp;
