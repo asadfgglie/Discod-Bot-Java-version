@@ -338,11 +338,6 @@ public class Basic extends ListenerAdapter {
         logger.info("");
         logger.info("======================");
         BUILDER.shutdown();
-
-        try {
-            wait(5000);
-        }
-        catch (InterruptedException ignore) {}
         System.exit(0);
     }
 
