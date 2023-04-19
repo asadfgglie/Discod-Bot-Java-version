@@ -145,7 +145,7 @@ Due to API limitations, Bot cannot check whether the GFloor built before startup
    * `!play <url> <volume>`: play musics
      * `play` can be replaced by the abbreviations `pl` or `p`.
      * `url`: Music link
-     * `volume`: Volume setting,the default is 15.
+     * `volume`: Volume setting,the default is 25.
 
    * `!pause`: Pause/resume currently play music
      * `pause` can be replaced by the abbreviation `pa`.
