@@ -1,32 +1,24 @@
 package ckcsc.asadfgglie.main.services.ai;
 
-import ckcsc.asadfgglie.main.Basic;
-import ckcsc.asadfgglie.main.services.Register.Services;
-import ckcsc.asadfgglie.util.Path;
-import ckcsc.asadfgglie.util.command.CommandData;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel;
-import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
-import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
-import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
+import ckcsc.asadfgglie.main.*;
+import ckcsc.asadfgglie.main.services.Register.*;
+import ckcsc.asadfgglie.util.*;
+import ckcsc.asadfgglie.util.command.*;
+import net.dv8tion.jda.api.*;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.*;
+import net.dv8tion.jda.api.entities.channel.middleman.*;
+import net.dv8tion.jda.api.entities.channel.unions.*;
+import net.dv8tion.jda.api.entities.emoji.*;
+import net.dv8tion.jda.api.events.message.*;
+import net.dv8tion.jda.api.events.message.react.*;
+import net.dv8tion.jda.api.events.session.*;
+import org.jetbrains.annotations.*;
+import org.json.*;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.*;
+import java.util.*;
+import java.util.concurrent.atomic.*;
 
 public class HumanFeedback extends AutoReply {
     /**
@@ -111,6 +103,14 @@ public class HumanFeedback extends AutoReply {
 
     @Override
     public void onMessageReceived (@NotNull MessageReceivedEvent event) {
+        try {
+            if (event.getChannel().asTextChannel().getParentCategory().getIdLong() != Basic.BUILDER.getTextChannelById(CHANNEL_ID).getParentCategory().getIdLong()) {
+                return;
+            }
+        }
+        catch (NullPointerException ignore){
+            return;
+        }
         CommandData cmd = CommandData.getCmdData(event);
         if(cmd.isCmd){
             if(CHANNEL_ID == event.getChannel().getIdLong()) {
@@ -233,6 +233,9 @@ public class HumanFeedback extends AutoReply {
         if(!event.isFromGuild() || event.getUser().isBot()){
             return;
         }
+        if(event.getChannel().asTextChannel().getParentCategory().getIdLong() != Basic.BUILDER.getTextChannelById(CHANNEL_ID).getParentCategory().getIdLong()){
+            return;
+        }
         if(UserChatData.get(event.getUserIdLong()) == null){
             return;
         }
@@ -287,14 +290,11 @@ public class HumanFeedback extends AutoReply {
                 if (data.getLong("CHANNEL_ID") == channel.getIdLong()) {
                     JSONArray reply = data.getJSONArray("reply");
 
-                    int i = 1;
                     for (Object tmp_reply: reply) {
-                        Message message = channel.sendMessage(i + ". " + tmp_reply.toString()).complete();
+                        Message message = channel.sendMessage(UserChatData.get(user.getIdLong()).messageTmp.size() + ". " + tmp_reply.toString()).complete();
                         
                         UserChatData.get(user.getIdLong()).messageTmp.add(message);
                         message.addReaction(Emoji.fromFormatted("✅")).complete();
-
-                        i++;
                     }
                     has_reply.set(true);
                 }
