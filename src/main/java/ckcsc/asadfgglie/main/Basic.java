@@ -1,10 +1,10 @@
 package ckcsc.asadfgglie.main;
 
-import ckcsc.asadfgglie.main.services.Register.ServiceArray;
-import ckcsc.asadfgglie.main.services.Register.Services;
+import ckcsc.asadfgglie.main.services.Register.*;
 import ckcsc.asadfgglie.util.Exception.StartInitException;
 import ckcsc.asadfgglie.util.command.CommandData;
 import ckcsc.asadfgglie.util.json.JSONConfig;
+
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -13,18 +13,18 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.Iterator;
-import java.util.Objects;
+import java.util.*;
 
 public class Basic extends ListenerAdapter {
     public final static int MAX_MESSAGE_SEND_LENGTH = 2000;
