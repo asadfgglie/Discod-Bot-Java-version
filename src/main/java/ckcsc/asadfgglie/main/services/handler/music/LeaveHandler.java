@@ -27,11 +27,7 @@ public class LeaveHandler extends Thread {
         }
         while(check){
             waitTime(Time.second);
-            if(!musicPlayer.mapData.getGuild(handler).getAudioManager().isConnected()){
-                handler.getAudioPlayer().destroy();
-                leave("I had been kicked!");
-            }
-            if(audioChannel.getMembers().size() <= 1){
+            if(audioChannel.getMembers().size() <= 1 && check){
                 leaveByListener();
             }
             if(handler.isPlaying){
@@ -43,7 +39,7 @@ public class LeaveHandler extends Thread {
     private void waitTime(long milliseconds){
         try {
             sleep(milliseconds);
-        } catch (InterruptedException ignore) { }
+        } catch (InterruptedException ignore) {}
     }
 
     private void leaveByNoPlaying() {
@@ -63,11 +59,14 @@ public class LeaveHandler extends Thread {
     }
 
     public void leave(String reason) {
-        musicPlayer.printAndSend(reason + "\nSo I will leave to sleep. (.w.)", musicPlayer.mapData.getMessageChannel(handler));
+        if(musicPlayer.mapData.contain(handler)) {
+            musicPlayer.printAndSend(reason + "\nSo I will leave to sleep. (.w.)", musicPlayer.mapData.getMessageChannel(handler));
 
-        musicPlayer.leave(musicPlayer.mapData.getAudioChannel(handler));
+            musicPlayer.leave(musicPlayer.mapData.getAudioChannel(handler));
+            handler.getAudioPlayer().destroy();
 
-        musicPlayer.mapData.remove(handler);
+            musicPlayer.mapData.remove(handler);
+        }
 
         check = false;
     }

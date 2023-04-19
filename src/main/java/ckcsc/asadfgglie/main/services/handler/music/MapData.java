@@ -52,7 +52,7 @@ public class MapData {
     }
 
 
-    public void put(AudioChannel audioChannel, MessageChannel messageChannel, Handler handler, LeaveHandler leaveHandler){
+    public synchronized void put(AudioChannel audioChannel, MessageChannel messageChannel, Handler handler, LeaveHandler leaveHandler){
         Guild guild = audioChannel.getGuild();
 
         handlerAudioChannelMap.put(handler, audioChannel);
@@ -61,12 +61,26 @@ public class MapData {
         guildMessageChannelMap.put(guild, messageChannel);
     }
 
-    public void remove (Handler handler) {
+    public synchronized void remove (Handler handler) {
         Guild guild = getGuild(handler);
 
         handlerAudioChannelMap.remove(handler);
         handlerLeaveHandlerMap.remove(handler);
         guildHandlerMap.remove(guild);
         guildMessageChannelMap.remove(guild);
+    }
+
+    public boolean contain(Handler handler){
+        if(handlerAudioChannelMap.containsKey(handler) != handlerLeaveHandlerMap.containsKey(handler)){
+            throw new RuntimeException("Key Error!");
+        }
+        return handlerAudioChannelMap.containsKey(handler);
+    }
+
+    public boolean contain(Guild guild){
+        if(guildHandlerMap.containsKey(guild) != guildMessageChannelMap.containsKey(guild)){
+            throw new RuntimeException("Key Error!");
+        }
+        return guildHandlerMap.containsKey(guild);
     }
 }

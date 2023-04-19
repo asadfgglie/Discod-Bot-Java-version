@@ -67,8 +67,10 @@ public class MusicPlayer extends Services {
 
         if(!cmdData.isCmd ||
            event.getAuthor().isBot() ||
-           !event.isFromGuild() ||
-           cmdData.isTargetSelf()){
+           !event.isFromGuild()){
+            return;
+        }
+        if(cmdData.hasTarget() && cmdData.isTargetSelf()){
             return;
         }
 
@@ -188,25 +190,14 @@ public class MusicPlayer extends Services {
         handler.showPlayList();
     }
 
-    // TODO: 確認可以撥放本地音樂 - 無法撥放
     private void playMusic(@NotNull CommandData commandData, MessageReceivedEvent event) {
-        boolean isLocal = false;
         String usage = "Usage:```\n!play <url>\n```or```\n!play <url> <volume>\n````or```\n!play local\n````url`: The music url.\n``volume`: Set the initial volume. Need Integer.\n`!play local` will play the bot's local musics.";
+        assert commandData.cmd != null;
         if (commandData.cmd.length < 2) {
             event.getChannel().sendMessage(usage).queue();
             return;
         }
-        /*
-        if(commandData.cmd[1].equals("local")){
-            if(localMusicPATH == null){
-                messageChannel.sendMessage("Admins didn't tell me where is local musics.\nIf you want to know about more information, please call admins.").queue();
-                return;
-            }
-            else{
-                isLocal = true;
-            }
-        }
-        */
+
         AudioChannel audioChannel;
         try {
             audioChannel = Objects.requireNonNull(event.getMember().getVoiceState().getChannel());
@@ -229,7 +220,7 @@ public class MusicPlayer extends Services {
             }
             catch (Exception ignore) {
                 if (!handler.isPlaying) {
-                    handler.getAudioPlayer().setVolume(15);
+                    handler.getAudioPlayer().setVolume(25);
                 }
             }
 
@@ -243,49 +234,7 @@ public class MusicPlayer extends Services {
 
             LoadResultHandler loadResultHandler = new LoadResultHandler(handler, url, mapData);
 
-            if (isLocal) {
-                /*
-                File musics = new File(localMusicPATH);
-                if(musics.isDirectory()) {
-                    if(musics.listFiles() != null) {
-                        for (File music : musics.listFiles()) {
-                            logger.info(music.getPath());
-                            // TODO: 修復此問題 - 無法撥放本地音樂
-                            audioPlayerManager.loadItem(music.getPath(), loadResultHandler);
-                        }
-                    }
-                    else{
-                        logger.error(localMusicPATH + " is an empty directory.");
-                    }
-                }
-                else {
-                    audioPlayerManager.loadItem(localMusicPATH, loadResultHandler);
-                }
-                */
-            }
-            else {
-                audioPlayerManager.loadItem(url, loadResultHandler);
-            }
-        }
-        else if (isLocal) {
-                /*
-                File musics = new File(localMusicPATH);
-                if(musics.isDirectory()) {
-                    if(musics.listFiles() != null) {
-                        for (File music : musics.listFiles()) {
-                            logger.info(music.getPath());
-                            // TODO: 修復此問題 - 無法撥放本地音樂
-                            audioPlayerManager.loadItem(music.getPath(), loadResultHandler);
-                        }
-                    }
-                    else{
-                        logger.error(localMusicPATH + " is an empty directory.");
-                    }
-                }
-                else {
-                    audioPlayerManager.loadItem(localMusicPATH, loadResultHandler);
-                }
-                */
+            audioPlayerManager.loadItem(url, loadResultHandler);
         }
         else {
             audioPlayerManager.loadItem(url, new LoadResultHandler(mapData.getHandler(event.getGuild()), url, mapData));
@@ -293,6 +242,7 @@ public class MusicPlayer extends Services {
     }
 
     private void stopPlay(Guild guild){
+        printAndSend("Bye! See you next time!", mapData.getMessageChannel(guild));
         mapData.getHandler(guild).isPlaying = false;
         mapData.getHandler(guild).getAudioPlayer().destroy();
         guild.getAudioManager().closeAudioConnection();
