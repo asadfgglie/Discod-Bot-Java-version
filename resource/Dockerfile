@@ -8,4 +8,6 @@ ADD ./*.jar /bot/
 
 ADD ./config /bot/config/
 
-CMD java -Dfile.encoding=UTF-8 -jar /bot/DiscordBot-all.jar --configpath ./config
+ADD ./script /bot/script/
+
+CMD java -Dfile.encoding=UTF-8 -jar /bot/DiscordBot-all.jar --configpath=./config --scriptpath=./script
