@@ -198,6 +198,8 @@ Register-value `remote` can use to connect to what has already opened flask back
 
 Its flask backend can share by `HumanFeedback` service.
 
+You can get some examples model in my other project: https://github.com/asadfgglie/ChatBot
+
 #### HumanFeedback
 
 It can use dialog-model to generate conversation, and then make people chose best reply or teach model how to say.
