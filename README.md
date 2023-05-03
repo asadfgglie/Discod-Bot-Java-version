@@ -136,7 +136,9 @@ At the same time, all services also need to override `copy()` for subsequent ser
 
 ##### Known bug
 
-Due to API limitations, Bot cannot check whether the GFloor built before startup satisfies Rule 5 and Rule 6.
+Due to early API limitations, Bot cannot check whether the GFloor built before startup satisfies Rule 5 and Rule 6.
+
+It will be fixed at future.
 
 #### MusicPlayer
 
@@ -171,6 +173,38 @@ Due to API limitations, Bot cannot check whether the GFloor built before startup
 
    * `!shuffle` : Scramble the to-be-played list
      * `shuffle` can be replaced by the abbreviation `sh`.
+
+#### MNIST
+
+It can recognize single number in the picture.
+
+Only can use keras model.
+
+Use `saved_model_cli` to get register-value `outputName`, `inputName` information.
+
+Model input format: (batch, width, height) 
+
+You can get some examples model in my other project: https://github.com/asadfgglie/MINST-app
+
+#### AutoReply
+
+It can use dialog-model to generate conversation.
+
+Use socket.io to call flask backend to generate.
+
+Only can use `transformers` model.
+
+Register-value `remote` can use to connect to what has already opened flask backend.
+
+Its flask backend can share by `HumanFeedback` service.
+
+#### HumanFeedback
+
+It can use dialog-model to generate conversation, and then make people chose best reply or teach model how to say.
+
+After talking, it can save dialog-history as training data.
+
+This service is extends by `AutoReply` service, so it has same register-values like `AutoReply`, and **DO NOT FORGET** make service channel have Category.
 
 ---
 
